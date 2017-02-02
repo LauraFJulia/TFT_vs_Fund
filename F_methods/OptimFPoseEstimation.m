@@ -32,8 +32,8 @@ K1=CalM(1:3,:); K2=CalM(4:6,:); K3=CalM(7:9,:);
 [x3,Normal3]=Normalize2Ddata(Corresp(5:6,:));
 
 % the 3 fundamental matrices
-[F21,it1]=fundamentalGH(x1,x2);
-[F31,it2]=fundamentalGH(x1,x3);
+[F21,it1]=optimF(x1,x2);
+[F31,it2]=optimF(x1,x3);
 iter=it1+it2;
 
 % Undo normalization
@@ -58,6 +58,7 @@ R_t_2=[R2,t2]; R_t_3=[R3,t3];
 
 % Find 3D points by triangulation
 Reconst=triangulation3D({K1*eye(3,4),K2*R_t_2,K3*R_t_3},Corresp);
+Reconst=Reconst(1:3,:)./repmat(Reconst(4,:),3,1);
 
 end
 

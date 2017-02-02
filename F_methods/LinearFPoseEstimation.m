@@ -55,6 +55,7 @@ R_t_2=[R2,t2]; R_t_3=[R3,t3];
 
 % Find 3D points by triangulation
 Reconst=triangulation3D({K1*eye(3,4),K2*R_t_2,K3*R_t_3},Corresp);
+Reconst=Reconst(1:3,:)./repmat(Reconst(4,:),3,1);
 
 end
 

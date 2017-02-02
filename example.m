@@ -16,11 +16,11 @@ method={...
     @LinearTFTPoseEstimation,...    % 1 - Linear TFT
     @MinimalTFTPoseEstimation,...   % 2 - Minimal TFT (Ressl)
     @PiPoseEstimation,...           % 3 - Pi matrices (Ponce&Hebert)
-    @PiPoseEstimation,...           % 4 - Pi matrices - collinear (Ponce&Hebert)
+    @PiColPoseEstimation,...        % 4 - Pi matrices - collinear (Ponce&Hebert)
     @LinearFPoseEstimation,...      % 5 - Linear Fundamental matrices
     @OptimFPoseEstimation};         % 6 - Fundamental matrices
 
-[R_t_2,R_t_3,Reconst]=method{1}(Corresp,CalM);
+[R_t_2,R_t_3,Reconst]=method{6}(Corresp,CalM);
 
 %% Compute the errors
 
