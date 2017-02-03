@@ -22,6 +22,8 @@ function [R_t_2,R_t_3,Reconst,T]=LinearTFTPoseEstimation(Corresp,CalM)
 %             correspondences.
 %  T        - 3x3x3 array containing the trifocal tensor associated to 
 %             this triplet of cameras.
+%
+% Copyright (c) 2017 Laura F. Julia
 
 % Normalization of the data
 [x1,Normal1]=Normalize2Ddata(Corresp(1:2,:));
@@ -35,7 +37,7 @@ T=linearTFT(x1,x2,x3);
 T=transform_TFT(T,Normal1,Normal2,Normal3,1);
 
 % Find orientation using calibration and TFT
-[R_t_2,R_t_3]=R_t_from_T(T,CalM,Corresp);
+[R_t_2,R_t_3]=R_t_from_TFT(T,CalM,Corresp);
 
 % Find 3D points by triangulation
 Reconst=triangulation3D({CalM(1:3,:)*eye(3,4),CalM(4:6,:)*R_t_2,CalM(7:9,:)*R_t_3},Corresp);

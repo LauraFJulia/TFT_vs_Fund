@@ -10,6 +10,8 @@ function T_new = transform_TFT(T_old,M1,M2,M3,inverse)
 % if inverse==1 :
 %   from a TFT T_old assossiated to P1_old, P2_old, P_old, find the new TFT
 %   T_new associated to M1*P1_new=P1_old, M2*P2_new=P2_old, M3*P3_new=P3_old.
+%
+% Copyright (c) 2017 Laura F. Julia
 
 if inverse==0
     M1i=inv(M1); T_new=zeros(3,3,3);

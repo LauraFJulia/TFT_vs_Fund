@@ -14,6 +14,8 @@ function [T,P1,P2,P3]=linearTFT(p1,p2,p3)
 %     T       - 3x3x3 array containing the trifocal tensor associated to 
 %               the triplets of corresponding points
 % P1, P2, P3  - three estimated projection matrices 3x4
+%
+% Copyright (c) 2017 Laura F. Julia
 
 N=size(p1,2);
 A=zeros(4*N,27); % matrix of the linear system on the parameters of the TFT

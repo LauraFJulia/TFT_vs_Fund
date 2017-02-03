@@ -10,6 +10,8 @@ function F=linearF(p1,p2)
 %
 % Output arguments:
 %   F     - 3x3 array, the fundamental matrix
+%
+% Copyright (c) 2017 Laura F. Julia
 
 N=size(p1,2);
 

@@ -11,6 +11,8 @@ function [x_opt,t_opt,y_opt,iterations]=Gauss_Helmert(func,x0,t0,y0,x,P)
 % y0        initial estimation for additional unknown parameters
 % x         observations
 % P         weight matrix for observations
+%
+% Copyright (c) 2017 Laura F. Julia
 
 it_max=400;
 tol=1e-6;

@@ -23,7 +23,9 @@ function [R_t_2,R_t_3,Reconst,T,iter]=MinimalTFTPoseEstimation(Corresp,CalM)
 %             correspondences.
 %  T        - 3x3x3 array containing the trifocal tensor associated to 
 %             this triplet of cameras.
-% iter      - number of iterations needed in GH algorithm to reach minimum       
+% iter      - number of iterations needed in GH algorithm to reach minimum 
+%
+% Copyright (c) 2017 Laura F. Julia      
 
 % Normalization of the data
 [x1,Normal1]=Normalize2Ddata(Corresp(1:2,:));
@@ -61,7 +63,7 @@ p=[S(:);e21(Ind2);mn(:);e31];
 x=reshape([x1(1:2,:);x2(1:2,:);x3(1:2,:)],6*N,1);
 x_est=reshape([p1_est;p2_est;p3_est],6*N,1);
 y=zeros(0,1);
-func=@(x1,x2,x3)constraintsGH_MTFT(x1,x2,x3,Ind);
+func=@(x1,x2,x3)constraintsGH(x1,x2,x3,Ind);
 [~,p_opt,~,iter]=Gauss_Helmert(func,x_est,p,y,x,eye(6*N));
 
 % recover parameters
@@ -77,7 +79,7 @@ T(:,:,3)=(S(:,3)*e21.'+e31*mn(3,:)).';
 T= transform_TFT(T,Normal1,Normal2,Normal3,1);
 
 % Find orientation using calibration and TFT
-[R_t_2,R_t_3]=R_t_from_T(T,CalM,Corresp);
+[R_t_2,R_t_3]=R_t_from_TFT(T,CalM,Corresp);
 
 % Find 3D points by triangulation
 Reconst=triangulation3D({CalM(1:3,:)*eye(3,4),CalM(4:6,:)*R_t_2,CalM(7:9,:)*R_t_3},Corresp);
@@ -85,7 +87,7 @@ Reconst=Reconst(1:3,:)./repmat(Reconst(4,:),3,1);
 
 end
 
-function [f,g,A,B,C,D]=constraintsGH_MTFT(x,p,~,Ind)
+function [f,g,A,B,C,D]=constraintsGH(x,p,~,Ind)
 % Constraints for GH of MTFT method
 
 Ind2=1:3; Ind2=Ind2(Ind2~=Ind);

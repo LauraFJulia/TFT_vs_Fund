@@ -3,6 +3,8 @@ function T=TFT_from_P(P1,P2,P3)
 %
 % General formula to compute the trifocal tensor from any three projection
 % matrices.
+%
+% Copyright (c) 2017 Laura F. Julia
 
 T=zeros(3,3,3);
 for i=1:3

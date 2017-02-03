@@ -1,4 +1,4 @@
-function [R_t_2,R_t_3]=R_t_from_T(T,CalM,Corresp)
+function [R_t_2,R_t_3]=R_t_from_TFT(T,CalM,Corresp)
 % Pose estimation of 3 views from the associated TriFocal Tensor and
 % the calibration matrices. 
 %
@@ -18,6 +18,8 @@ function [R_t_2,R_t_3]=R_t_from_T(T,CalM,Corresp)
 %             vector [R2,t2] for the second camera.
 %  R_t_3    - 3x4 matrix containing the rotation matrix and translation 
 %             vector [R3,t3] for the third camera.
+%
+% Copyright (c) 2017 Laura F. Julia
 
 N=size(Corresp,2);
 K1=CalM(1:3,:); K2=CalM(4:6,:); K3=CalM(7:9,:);
@@ -35,11 +37,6 @@ T= transform_TFT(T,K1,K2,K3,1);
 [~,~,V]=svd(T(:,:,2).'); v2=V(:,end);
 [~,~,V]=svd(T(:,:,3).'); v3=V(:,end);
 [~,~,V]=svd([v1 v2 v3].'); epi21=V(:,end)*sign(V(end));
-% [~,~,aux]=svd([null(T(:,:,1).') null(T(:,:,2).') null(T(:,:,3).')].');
-% epi21=aux(:,3);  epi21=epi21*sign(epi21(3))
-% 
-% [~,~,aux]=svd([null(T(:,:,1)) null(T(:,:,2)) null(T(:,:,3))].');
-% epi31=aux(:,3);  epi31=epi31*sign(epi31(3))
 
 E21=crossM(epi21)*[T(:,:,1)*epi31 T(:,:,2)*epi31 T(:,:,3)*epi31];
 E31=-crossM(epi31)*[T(:,:,1).'*epi21 T(:,:,2).'*epi21 T(:,:,3).'*epi21];

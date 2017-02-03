@@ -12,6 +12,8 @@ function space_points=triangulation3D(Pcam,image_points)
 % Output arguments:
 % space_points - 4xN-array containing the 3d estimated positions (in
 %                 homogeneous coordinates) of the image points.
+%
+% Copyright (c) 2017 Laura F. Julia
 
 
 M=size(Pcam,2); % number of images

@@ -12,6 +12,8 @@ function [F,iter]=optimF(p1,p2)
 % Output arguments:
 % F       - 3x3 array, the fundamental matrix
 % iter    - number of iterations needed in GH algorithm to reach minimum
+%
+% Copyright (c) 2017 Laura F. Julia
 
 N=size(p1,2);
 % Minimum number of correspondences is 8

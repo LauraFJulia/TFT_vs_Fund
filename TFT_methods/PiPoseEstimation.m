@@ -26,6 +26,8 @@ function [R_t_2,R_t_3,Reconst,T,iter]=PiPoseEstimation(Corresp,CalM)
 %  T        - 3x3x3 array containing the trifocal tensor associated to 
 %             this triplet of cameras.
 % iter      - number of iterations needed in GH algorithm to reach minimum
+%
+% Copyright (c) 2017 Laura F. Julia
 
 % Number of correspondences
 N=size(Corresp,2);
@@ -70,43 +72,24 @@ x=reshape([x1;x2;x3],6*N,1);
 x_est=reshape([p1_est;p2_est;p3_est],6*N,1);
 y=zeros(0,1);
 P=eye(6*N);
-[~,pi_opt,~,iter]=Gauss_Helmert(@constraintsGH_PiM,x_est,pi,y,x,P);
+[~,pi_opt,~,iter]=Gauss_Helmert(@constraintsGH,x_est,pi,y,x,P);
 
 % retrieve geometry from parameters 
 Pi1=(reshape(pi_opt(1:9),3,3)).';
 Pi2=(reshape(pi_opt(10:18),3,3)).';
 Pi3=(reshape(pi_opt(19:27),3,3)).';
-% P1=zeros(3,4); P2=zeros(3,4); P3=zeros(3,4);
-% P1(:,2:4)=inv(Pi1); 
-% P2(:,[1 3 4])=inv(Pi2);
-% P3(:,[1 2 4])=inv(Pi3);
-% T=TFT_from_P(P1,P2,P3);
-% 
-% % denormalization
-% T=transform_TFT(T,Normal1,Normal2,Normal3,1);
-% 
-% % Find orientation using calibration and TFT
-% [R_t_2,R_t_3]=R_t_from_T(T,CalM,Corresp);
+P1=zeros(3,4); P2=zeros(3,4); P3=zeros(3,4);
+P1(:,2:4)=inv(Pi1); 
+P2(:,[1 3 4])=inv(Pi2);
+P3(:,[1 2 4])=inv(Pi3);
+T=TFT_from_P(P1,P2,P3);
 
-F21=Normal2.'*(Pi2(2,:).'*Pi1(3,:)-Pi2(3,:).'*Pi1(2,:))*Normal1;
-F31=Normal3.'*(Pi3(2,:).'*Pi1(3,:)-Pi3(3,:).'*Pi1(1,:))*Normal1;
-[R2,t2]=recover_R_t(CalM(1:3,:),CalM(4:6,:),F21,Corresp(1:2,:),Corresp(3:4,:));
-[R3,t3]=recover_R_t(CalM(1:3,:),CalM(7:9,:),F31,Corresp(1:2,:),Corresp(5:6,:));
+% denormalization
+T=transform_TFT(T,Normal1,Normal2,Normal3,1);
 
-% Find the norm of t3 using the image points and reconstruction from
-% images 1 and 2
-u3=CalM(7:9,:)*t3;
-X=triangulation3D({CalM(1:3,:)*eye(3,4),CalM(4:6,:)*[R2,t2]},Corresp(1:4,:));
-X=X(1:3,:)./repmat(X(4,:),3,1);
-X3=CalM(7:9,:)*R3*X;
-lam=-sum(dot(cross([Corresp(5:6,:);ones(1,N)],X3,1),cross([Corresp(5:6,:);ones(1,N)],repmat(u3,1,N)),1))/...
-    sum(sum(cross([Corresp(5:6,:);ones(1,N)],repmat(u3,1,N)).^2));
-t3=lam*t3;
+% Find orientation using calibration and TFT
+[R_t_2,R_t_3]=R_t_from_TFT(T,CalM,Corresp);
 
-R_t_2=[R2,t2]; R_t_3=[R3,t3];
-
-% tensor
-T=TFT_from_P(CalM(1:3,:)*eye(3,4),CalM(4:6,:)*R_t_2,CalM(7:9,:)*R_t_3);
 % Find 3D points by triangulation
 Reconst=triangulation3D({CalM(1:3,:)*eye(3,4),CalM(4:6,:)*R_t_2,CalM(7:9,:)*R_t_3},Corresp);
 Reconst=Reconst(1:3,:)./repmat(Reconst(4,:),3,1);
@@ -114,37 +97,7 @@ Reconst=Reconst(1:3,:)./repmat(Reconst(4,:),3,1);
 end
 
 
-
-function [R_f,t_f]=recover_R_t(K1,K2,F21,x1,x2)
-
-E21=K2.'*F21*K1;
-W=[0 -1 0; 1 0 0; 0 0 1];
-[U,~,V]=svd(E21);
-R=U*W*V.';  Rp=U*W.'*V.';
-R=R*sign(det(R)); Rp=Rp*sign(det(Rp));
-t=U(:,3);
-
-%from the 4 possible solutions find the correct one using the image points
-num_points_seen=0;
-for k=1:4
-    if k==2 || k==4
-        t=-t;
-    elseif k==3
-        R=Rp;
-    end
-    X1=triangulation3D({[K1 [0;0;0]],K2*[R,t]},[x1;x2]); X1=X1./repmat(X1(4,:),4,1);
-    X2=[R t]*X1;
-    if sum(sign(X1(3,:))+sign(X2(3,:)))>=num_points_seen
-        R_f=R; t_f=t;
-        num_points_seen=sum(sign(X1(3,:))+sign(X2(3,:)));
-    end
-end
-
-end
-
-
-
-function [f,g,A,B,C,D]=constraintsGH_PiM(x,pi,~,~)
+function [f,g,A,B,C,D]=constraintsGH(x,pi,~,~)
 % constraints for GH of PiM method
 
 N=size(x,1)/6;

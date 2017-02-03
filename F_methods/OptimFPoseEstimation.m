@@ -22,6 +22,8 @@ function [R_t_2,R_t_3,Reconst,iter]=OptimFPoseEstimation(Corresp,CalM)
 %  Reconst  - 3xN matrix containing the 3D reconstruction of the
 %             correspondences.
 %  iter     - number of iterations needed in GH algorithm to reach minimum
+%
+% Copyright (c) 2017 Laura F. Julia
 
 N=size(Corresp,2);
 K1=CalM(1:3,:); K2=CalM(4:6,:); K3=CalM(7:9,:);

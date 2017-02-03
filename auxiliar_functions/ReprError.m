@@ -15,6 +15,8 @@ function error=ReprError(ProjM,Corresp,Points3D)
 %
 % Output arguments:
 %  error      - reprojection error
+%
+% Copyright (c) 2017 Laura F. Julia
 
 % computing dimensions
 N=size(Corresp,2);

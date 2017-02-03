@@ -26,6 +26,8 @@ function [R_t,Reconst,iter,repr_err]=BundleAdjustment(CalM,R_t_0,Corresp,Reconst
 %  Reconst  - 3xN matrix containing the final estimation of the N 3D points.
 %  iter     - number of iterations needed in L-M algorithm to reach
 %             the minimum.
+%
+% Copyright (c) 2017 Laura F. Julia
                 
 
 
