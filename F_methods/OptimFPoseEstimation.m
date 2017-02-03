@@ -26,19 +26,10 @@ function [R_t_2,R_t_3,Reconst,iter]=OptimFPoseEstimation(Corresp,CalM)
 N=size(Corresp,2);
 K1=CalM(1:3,:); K2=CalM(4:6,:); K3=CalM(7:9,:);
 
-% Normalization of the data
-[x1,Normal1]=Normalize2Ddata(Corresp(1:2,:));
-[x2,Normal2]=Normalize2Ddata(Corresp(3:4,:));
-[x3,Normal3]=Normalize2Ddata(Corresp(5:6,:));
-
-% the 3 fundamental matrices
-[F21,it1]=optimF(x1,x2);
-[F31,it2]=optimF(x1,x3);
+% the 2 fundamental matrices
+[F21,it1]=optimF(Corresp(1:2,:),Corresp(3:4,:));
+[F31,it2]=optimF(Corresp(1:2,:),Corresp(5:6,:));
 iter=it1+it2;
-
-% Undo normalization
-F21=Normal2.'*F21*Normal1; 
-F31=Normal3.'*F31*Normal1;
 
 % Find orientation using calibration and F matrices
 [R2,t2]=recover_R_t(K1,K2,F21,Corresp(1:2,:),Corresp(3:4,:));

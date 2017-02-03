@@ -19,8 +19,8 @@ if N~=size(p2,2) || N<8
 end
 
 if size(p1,1)==3
-    p1=p1(1:2,:)/repmat(p1(3,:),2,1);
-    p2=p2(1:2,:)/repmat(p2(3,:),2,1);
+    p1=p1(1:2,:)./repmat(p1(3,:),2,1);
+    p2=p2(1:2,:)./repmat(p2(3,:),2,1);
 end
 
 % Normalization of the data

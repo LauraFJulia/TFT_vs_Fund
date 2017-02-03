@@ -3,7 +3,7 @@
 clear;
 
 %% Generate some random data for a triplet of images
-N=100;      % number of 3D points
+N=12;      % number of 3D points
 noise=1;    % sigma for the added Gaussian noise in pixels
 seed=1;     % seed for random generation
 f=50;       % focal length in mm

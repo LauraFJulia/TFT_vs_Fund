@@ -20,45 +20,46 @@ if N~=size(p2,2) || N<8
 end
 
 if size(p1,1)==3
-    p1=p1(1:2,:)/repmat(p1(3,:),2,1);
-    p2=p2(1:2,:)/repmat(p2(3,:),2,1);
+    p1=p1(1:2,:)./repmat(p1(3,:),2,1);
+    p2=p2(1:2,:)./repmat(p2(3,:),2,1);
 end
 
 % Normalization of the data
-[p1,Normal1]=Normalize2Ddata(p1(1:2,:));
-[p2,Normal2]=Normalize2Ddata(p2(1:2,:));
+[x1,Normal1]=Normalize2Ddata(p1);
+[x2,Normal2]=Normalize2Ddata(p2);
 
 % initial estimate of F
-F=linearF(p1,p2); F=F/sqrt(sum(F(1:9).^2));
+F=linearF(x1,x2); F=F/sqrt(sum(F(1:9).^2));
 
 % projection matrices from F and 3d points
 [U,~,~]=svd(F); epi21=U(:,3);
 P1=eye(3,4);
 P2=[crossM(epi21)*F epi21];
-points3D=triangulation3D({P1,P2},[p1;p2]);
+points3D=triangulation3D({P1,P2},[x1;x2]);
 
 % refinement using GH on F parameters
 p1_est=P1*points3D; p1_est=p1_est(1:2,:)./repmat(p1_est(3,:),2,1);
 p2_est=P2*points3D; p2_est=p2_est(1:2,:)./repmat(p2_est(3,:),2,1);
 p=reshape(F,9,1);
-x=reshape([p1(1:2,:);p2(1:2,:)],4*N,1);
+x=reshape([x1(1:2,:);x2(1:2,:)],4*N,1);
 x_est=reshape([p1_est;p2_est],4*N,1);
 y=zeros(0,1);
 P=eye(4*N);
-[~,p_opt,~,iter]=Gauss_Helmert(@constraintsGH,x_est,p,y,x,P);
+[~,p_opt,~,iter]=Gauss_Helmert(@constraintsGH_F,x_est,p,y,x,P);
 
 % recover parameters
 F=reshape(p_opt,3,3);
-% singularity constraint
-[U,D,V]=svd(F); D(3,3)=0;
-F=U*D*V.';
 
 % Undo normalization
 F=Normal2.'*F*Normal1;
 
+% singularity constraint
+[U,D,V]=svd(F); D(3,3)=0;
+F=U*D*V.';
+
 end
 
-function [f,g,A,B,C,D]=constraintsGH(x,p,~)
+function [f,g,A,B,C,D]=constraintsGH_F(x,p,~)
 % Gauss-Helmert constraints for fundamental matrix optimization
 N=size(x,1)/4;
 x=reshape(x,4,N);
