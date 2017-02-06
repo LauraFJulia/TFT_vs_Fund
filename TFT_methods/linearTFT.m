@@ -21,9 +21,9 @@ N=size(p1,2);
 A=zeros(4*N,27); % matrix of the linear system on the parameters of the TFT
 
 if size(p1,1)==3
-    p1=p1(1:2,:)/repmat(p1(3,:),2,1);
-    p2=p2(1:2,:)/repmat(p2(3,:),2,1);
-    p3=p3(1:2,:)/repmat(p3(3,:),2,1);
+    p1=p1(1:2,:)./repmat(p1(3,:),2,1);
+    p2=p2(1:2,:)./repmat(p2(3,:),2,1);
+    p3=p3(1:2,:)./repmat(p3(3,:),2,1);
 end
 
 for i=1:N
