@@ -5,19 +5,22 @@ This MATLAB(R) directory contains the code implemented for the ICIP 2017 submiss
 
 ## CONTENT
 This directory should contain the following files and folders:
-  TFT_methods/          - Pose estimation methods based on the TFT and auxiliary functions
-  F_methods/            - Pose estimation methods based on the F and auxiliary functions
-  Optimization/         - Optimization functions: Gauss_Helmert.m and BundleAdjustment.m
-  auxiliar_functions/   - Auxiliary functuions for triangulation, error computation, etc
-  README.md             - This file
-  LICENSE               - License file
-  experiments.m         - experiments script
-  example.m             - example script
+
+ Files                 | Description
+ :-------------------- | :---------------------------------------------------------------
+ TFT_methods/          | Pose estimation methods based on the TFT and auxiliary functions
+ F_methods/            | Pose estimation methods based on the F and auxiliary functions
+ Optimization/         | Optimization functions: Gauss_Helmert.m and BundleAdjustment.m
+ auxiliar_functions/   | Auxiliary functuions for triangulation, error computation, etc
+ README.md             | This file
+ LICENSE               | License file
+ experiments.m         | experiments script
+ example.m             | example script
 
 ## SETUP
 1. You must have MATLAB software installed on your computer.
-2. Copy/move the 'TFT_vs_F' folder to the MATLAB 'work' directory.
-3. Open MATLAB and add the 'TFT_vs_F' directory to the Path.
+2. Copy/move the 'TFT_vs_Fund' folder to the MATLAB 'work' directory.
+3. Open MATLAB and add the 'TFT_vs_Fund' directory to the Path.
 4. Run one of the example scripts detailed in usage section below.
 
 ## USAGE
