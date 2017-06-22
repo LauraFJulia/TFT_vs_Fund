@@ -8,7 +8,7 @@ N=12;       % number of 3D points
 noise=1;    % sigma for the added Gaussian noise in pixels
 f=50;       % focal length in mm
 p_coll=0;   % no collinearity of camera centers
-n_sim=20;   % number of simulations of data
+n_sim=2;   % number of simulations of data
 
 %% Change the interval to reproduce different experiments
 
@@ -23,12 +23,13 @@ interval=0:0.25:3;      % for varying noise
 method={...
     @LinearTFTPoseEstimation,...    % 1 - Linear TFT
     @MinimalTFTPoseEstimation,...   % 2 - Minimal TFT (Ressl)
-    @PiPoseEstimation,...           % 3 - Pi matrices (Ponce&Hebert)
-    @PiColPoseEstimation,...        % 4 - Pi matrices - collinear (Ponce&Hebert)
-    @LinearFPoseEstimation,...      % 5 - Linear Fundamental matrices
-    @OptimFPoseEstimation};         % 6 - Fundamental matrices
+    @NordbergTFTPoseEstimation,...  % 3 - Minimal TFT (Nordberg)
+    @PiPoseEstimation,...           % 4 - Pi matrices (Ponce&Hebert)
+    @PiColPoseEstimation,...        % 5 - Pi matrices - collinear (Ponce&Hebert)
+    @LinearFPoseEstimation,...      % 6 - Linear Fundamental matrices
+    @OptimFPoseEstimation};         % 7 - Fundamental matrices
 
-methods_to_test=1:6;
+methods_to_test=1:3;
 
 % error vectors
 repr_err=zeros(length(interval),length(method),2);
@@ -81,9 +82,10 @@ end
 
 %% Plot results
 % methods_to_plot=1:6;        % All methods
-methods_to_plot=[1:3,5:6];  % no collinear method
+% methods_to_plot=[1:3,5:6];  % no collinear method
+methods_to_plot=1:3;
 
-method_names={'Linear TFT','Ressl TFT','Ponce&Hebert',...
+method_names={'Linear TFT','Ressl TFT','Nordberg','Ponce&Hebert',...
     'Ponce&Hebert-Col', 'Linear F', 'Optim F', 'Bundle Adj.'};
 
 % reprojection error plot
