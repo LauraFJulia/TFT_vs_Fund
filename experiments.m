@@ -8,7 +8,7 @@ N=12;       % number of 3D points
 noise=1;    % sigma for the added Gaussian noise in pixels
 f=50;       % focal length in mm
 p_coll=0;   % no collinearity of camera centers
-n_sim=2;   % number of simulations of data
+n_sim=10;   % number of simulations of data
 
 %% Change the interval to reproduce different experiments
 
@@ -17,14 +17,13 @@ interval=0:0.25:3;      % for varying noise
 % interval=0.94:0.01:1;   % for making camera centers collinear
 % interval=8:25;          % for varying number of initial points
 
-
 %% Test the methods
 
 method={...
     @LinearTFTPoseEstimation,...    % 1 - Linear TFT
     @MinimalTFTPoseEstimation,...   % 2 - Minimal TFT (Ressl)
-    @PapaFaugTFTPoseEstimation,...  % 3 - Papadopoulo Faugeras TFT
-    @NordbergTFTPoseEstimation,...  % 4 - Minimal TFT (Nordberg)
+    @NordbergTFTPoseEstimation,...  % 3 - Minimal TFT (Nordberg)
+    @PapaFaugTFTPoseEstimation,...  % 4 - Papadopoulo Faugeras TFT
     @PiPoseEstimation,...           % 5 - Pi matrices (Ponce&Hebert)
     @PiColPoseEstimation,...        % 6 - Pi matrices - collinear (Ponce&Hebert)
     @LinearFPoseEstimation,...      % 7 - Linear Fundamental matrices
@@ -41,6 +40,7 @@ iterBA=zeros(length(interval),length(method));
 for i=1:length(interval)
     % change variable to the one to be varyied
     noise=interval(i);
+    fprintf('Noise= %f\n', noise);
     
     for it=1:n_sim
         % Generate random data for a triplet of images
@@ -84,7 +84,7 @@ end
 %% Plot results
 % methods_to_plot=1:6;        % All methods
 % methods_to_plot=[1:3,5:6];  % no collinear method
-methods_to_plot=1:3;
+methods_to_plot=methods_to_test;
 
 method_names={'Linear TFT','Ressl TFT','Nordberg','PapadFaug','Ponce&Hebert',...
     'Ponce&Hebert-Col', 'Linear F', 'Optim F', 'Bundle Adj.'};
