@@ -24,12 +24,13 @@ method={...
     @LinearTFTPoseEstimation,...    % 1 - Linear TFT
     @MinimalTFTPoseEstimation,...   % 2 - Minimal TFT (Ressl)
     @PapaFaugTFTPoseEstimation,...  % 3 - Papadopoulo Faugeras TFT
-    @PiPoseEstimation,...           % 4 - Pi matrices (Ponce&Hebert)
-    @PiColPoseEstimation,...        % 5 - Pi matrices - collinear (Ponce&Hebert)
-    @LinearFPoseEstimation,...      % 6 - Linear Fundamental matrices
-    @OptimFPoseEstimation};         % 7 - Fundamental matrices
+    @NordbergTFTPoseEstimation,...  % 4 - Minimal TFT (Nordberg)
+    @PiPoseEstimation,...           % 5 - Pi matrices (Ponce&Hebert)
+    @PiColPoseEstimation,...        % 6 - Pi matrices - collinear (Ponce&Hebert)
+    @LinearFPoseEstimation,...      % 7 - Linear Fundamental matrices
+    @OptimFPoseEstimation};         % 8 - Fundamental matrices
 
-methods_to_test=1:3;
+methods_to_test=1:4;
 
 % error vectors
 repr_err=zeros(length(interval),length(method),2);
@@ -82,9 +83,10 @@ end
 
 %% Plot results
 % methods_to_plot=1:6;        % All methods
-methods_to_plot=[1:3,5:6];  % no collinear method
+% methods_to_plot=[1:3,5:6];  % no collinear method
+methods_to_plot=1:3;
 
-method_names={'Linear TFT','Ressl TFT','Ponce&Hebert',...
+method_names={'Linear TFT','Ressl TFT','Nordberg','PapadFaug','Ponce&Hebert',...
     'Ponce&Hebert-Col', 'Linear F', 'Optim F', 'Bundle Adj.'};
 
 % reprojection error plot
