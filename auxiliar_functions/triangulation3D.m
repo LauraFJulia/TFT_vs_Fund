@@ -5,9 +5,9 @@ function space_points=triangulation3D(Pcam,image_points)
 % by minimizing reprojection error using Gauss-Helmert method
 %
 % Input arguments:
-%       P      - M-cell of projection 3x4-matrices
-% image_points - 2MxN-matrix with the image points in each image
-%        or    - 3MxN-matrix with the image points in each image with
+% Pcam         - M-cell of projection 3x4-matrices
+% image_points - 2MxN-matrix with the image points in each image OR
+%                3MxN-matrix with the image points in each image with
 %                homogeneous coord
 % Output arguments:
 % space_points - 4xN-array containing the 3d estimated positions (in

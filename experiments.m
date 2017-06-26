@@ -8,7 +8,7 @@ N=12;       % number of 3D points
 noise=1;    % sigma for the added Gaussian noise in pixels
 f=50;       % focal length in mm
 p_coll=0;   % no collinearity of camera centers
-n_sim=10;   % number of simulations of data
+n_sim=2;   % number of simulations of data
 
 %% Change the interval to reproduce different experiments
 
@@ -29,13 +29,15 @@ method={...
     @LinearFPoseEstimation,...      % 7 - Linear Fundamental matrices
     @OptimFPoseEstimation};         % 8 - Fundamental matrices
 
-methods_to_test=1:4;
+methods_to_test=[1:5,7:8];
+methods_to_test=1:3;
 
 % error vectors
 repr_err=zeros(length(interval),length(method),2);
 rot_err=zeros(length(interval),length(method),2);
 t_err=zeros(length(interval),length(method),2);
-iterBA=zeros(length(interval),length(method));
+iter=zeros(length(interval),length(method),2);
+time=zeros(length(interval),length(method),2);
 
 for i=1:length(interval)
     % change variable to the one to be varyied
@@ -50,8 +52,11 @@ for i=1:length(interval)
         
         for m=methods_to_test
             
-            % pose estimation by method m
-            [R_t_2,R_t_3,Reconst]=method{m}(Corresp,CalM);
+            % pose estimation by method m, measuring time            
+            t0=cputime;
+            [R_t_2,R_t_3,Reconst,~,nit]=method{m}(Corresp,CalM);
+            t=cputime-t0;
+            
             % reprojection error
             repr_err(i,m,1)= repr_err(i,m,1)+...
                 ReprError({CalM(1:3,:)*eye(3,4),...
@@ -59,13 +64,19 @@ for i=1:length(interval)
             % angular errors
             [rot2_err,t2_err]=AngError(R_t0{1},R_t_2);
             [rot3_err,t3_err]=AngError(R_t0{2},R_t_3);
-            
             rot_err(i,m,1)=rot_err(i,m,1)+(rot2_err+rot3_err)/(2*n_sim);
             t_err(i,m,1)=t_err(i,m,1)+(t2_err+t3_err)/(2*n_sim);
             
+            % iterations & time
+            iter(i,m,1)=iter(i,m,1)+nit/n_sim;
+            time(i,m,1)=time(i,m,1)+t/n_sim;
+            
             % Apply Bundle Adjustment
-            [R_t_ref,~,iter,repr_errBA]=BundleAdjustment(CalM,...
+            t0=cputime;
+            [R_t_ref,~,nit,repr_errBA]=BundleAdjustment(CalM,...
                 [eye(3,4);R_t_2;R_t_3],Corresp,Reconst);
+            t=cputime-t0;
+            
             % reprojection error
             repr_err(i,m,2)=repr_err(i,m,2)+repr_errBA/n_sim;
             % angular errors
@@ -73,8 +84,9 @@ for i=1:length(interval)
             [rot3_err,t3_err]=AngError(R_t0{2},R_t_ref(7:9,:));
             rot_err(i,m,2)=rot_err(i,m,2)+(rot2_err+rot3_err)/(2*n_sim);
             t_err(i,m,2)=t_err(i,m,2)+(t2_err+t3_err)/(2*n_sim);
-            % iterations
-            iterBA(i,m)=iterBA(i,m)+iter/n_sim;
+            % iterations & time
+            iter(i,m,2)=iter(i,m,2)+nit/n_sim;
+            time(i,m,2)=time(i,m,2)+t/n_sim;
         end
     end
 end
@@ -89,47 +101,68 @@ methods_to_plot=methods_to_test;
 method_names={'Linear TFT','Ressl TFT','Nordberg','PapadFaug','Ponce&Hebert',...
     'Ponce&Hebert-Col', 'Linear F', 'Optim F', 'Bundle Adj.'};
 
+figure('Position',[100,600,1800,300])
+
 % reprojection error plot
-figure;
+subplot(1,5,1);
 plot(interval,repr_err(:,methods_to_plot,1))
 title('Reprojection error')
 legend(method_names(methods_to_plot),'Location','Best')
 
 % rotation error plot
-figure;
+subplot(1,5,2);
 plot(interval,rot_err(:,methods_to_plot,1))
 title('Angular error in rotations')
 legend(method_names(methods_to_plot),'Location','Best')
 
 % translation error plot
-figure;
+subplot(1,5,3);
 plot(interval,t_err(:,methods_to_plot,1))
 title('Angular error in translations')
 legend(method_names(methods_to_plot),'Location','Best')
 
+% iterations initial estimation plot
+subplot(1,5,4);
+plot(interval,iter(:,methods_to_plot,1))
+title('Iterations in initial methods')
+legend(method_names(methods_to_plot),'Location','Best')
+
+% time initial estimation plot
+subplot(1,5,5);
+plot(interval,time(:,methods_to_plot,1))
+title('Time for initial methods')
+legend(method_names(methods_to_plot),'Location','Best')
+
 % plots for Bundle Adjustment
+figure('Position',[100,100,1800,300])
 % reprojection error plot
-figure;
+subplot(1,5,1);
 plot(interval,repr_err(:,methods_to_plot,2))
 title('Reprojection error-BA')
 legend(method_names(methods_to_plot),'Location','Best')
 
 % rotation error plot
-figure;
+subplot(1,5,2);
 plot(interval,rot_err(:,methods_to_plot,2))
 title('Angular error in rotations-BA')
 legend(method_names(methods_to_plot),'Location','Best')
 
 % translation error plot
-figure;
+subplot(1,5,3);
 plot(interval,t_err(:,methods_to_plot,2))
 title('Angular error in translations-BA')
 legend(method_names(methods_to_plot),'Location','Best')
 
 % iterations in bundle adjustment plot
-figure;
-plot(interval,iterBA(:,methods_to_plot))
+subplot(1,5,4);
+plot(interval,iter(:,methods_to_plot,2))
 title('Iterations in bundle adjustment')
+legend(method_names(methods_to_plot),'Location','Best')
+
+% time initial estimation plot
+subplot(1,5,5);
+plot(interval,time(:,methods_to_plot,2))
+title('Time for Bundle adjustment')
 legend(method_names(methods_to_plot),'Location','Best')
 
 

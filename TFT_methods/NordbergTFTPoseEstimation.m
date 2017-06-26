@@ -73,7 +73,8 @@ param0=[vec_u*o_u; vec_v*o_v; vec_w*o_w;...
     paramT([1:iT-1,iT+1:10])];
 func=@(x)ls_trilin(x,iT,[x1;x2;x3]);
 options = optimoptions(@lsqnonlin,'Display','off');
-param = lsqnonlin(func,param0,[],[],options);
+[param,~,~,~,output] = lsqnonlin(func,param0,[],[],options);
+iter=output.iterations;
 
 % orthogonal matrices
 o_u=norm(param(1:3)); vec_u=param(1:3)/o_u;
@@ -151,4 +152,45 @@ for i=1:N
 end
 
 end
+% 
+% function f=ls_repr(x,iT,obs,CalM)
+% 
+% % orthogonal matrices
+% o_u=norm(x(1:3)); vec_u=x(1:3)/o_u;
+% o_v=norm(x(4:6)); vec_v=x(4:6)/o_v;
+% o_w=norm(x(7:9)); vec_w=x(7:9)/o_w;
+% U=eye(3)+sin(o_u)*crossM(vec_u)+(1-cos(o_u))*crossM(vec_u)^2;
+% V=eye(3)+sin(o_v)*crossM(vec_v)+(1-cos(o_v))*crossM(vec_v)^2;
+% W=eye(3)+sin(o_w)*crossM(vec_w)+(1-cos(o_w))*crossM(vec_w)^2;
+% 
+% % sparse tensor
+% paramT=ones(10,1);
+% paramT([1:iT-1,iT+1:10])=x(10:18);
+% Ts=zeros(3,3,3);
+% Ts([1,7,10,12,16,19:22,25])=paramT;
+% 
+% % original tensor
+% T=transform_TFT(Ts,U',V',W',1);
+% [R_t_2,R_t_3]=R_t_from_TFT(T,CalM,obs);
+% P1=CalM(1:3,:)*eye(3,4);
+% P2=CalM(1:3,:)*R_t_2;
+% P3=CalM(7:9,:)*R_t_3;
+% Pcam={P1,P2,P3};
+% X=triangulation3D({P1,P2,P3},obs);
+% 
+% N=size(obs,2);
+% f=zeros(2*3*N,1);
+% for i=1:N
+%     P=X(:,i);
+%     for j=1:3
+%         p=obs(2*(j-1)+1,i);
+%         p_est=Pcam{j}*P; p_est=p_est(1:2)/p_est(3);
+%         f(6*(i-1)+2*(j-1)+(1:2))=p-p_est;
+%     end
+% end
+% 
+% end
+
+
+
 

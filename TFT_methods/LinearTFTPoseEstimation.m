@@ -1,4 +1,4 @@
-function [R_t_2,R_t_3,Reconst,T]=LinearTFTPoseEstimation(Corresp,CalM)
+function [R_t_2,R_t_3,Reconst,T,iter]=LinearTFTPoseEstimation(Corresp,CalM)
 % Pose estimation of 3 views from corresponding triplets of points using
 % the linear TriFocal Tensor. 
 %
@@ -42,5 +42,7 @@ T=transform_TFT(T,Normal1,Normal2,Normal3,1);
 % Find 3D points by triangulation
 Reconst=triangulation3D({CalM(1:3,:)*eye(3,4),CalM(4:6,:)*R_t_2,CalM(7:9,:)*R_t_3},Corresp);
 Reconst=Reconst(1:3,:)./repmat(Reconst(4,:),3,1);
+
+iter=0;
 
 end
