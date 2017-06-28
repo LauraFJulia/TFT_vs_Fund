@@ -3,19 +3,32 @@
 
 clear; close all;
 
+%% Here uncomment the variable to vary to reproduce different experiments
+% option='noise';  % for varying noise
+% option='focal';  % for varying focal length
+option='points'; % for varying number of initial points
+% option='angle';  % for making camera centers collinear
+
+
 %% Initial parameters
 N=12;       % number of 3D points
 noise=1;    % sigma for the added Gaussian noise in pixels
 f=50;       % focal length in mm
-p_coll=0;   % no collinearity of camera centers
-n_sim=2;   % number of simulations of data
+angle=0;   % no collinearity of camera centers
+n_sim=20;   % number of simulations of data
 
-%% Change the interval to reproduce different experiments
+%% Interval
 
-interval=0:0.25:3;      % for varying noise
-% interval=20:20:300;     % for varying focal length
-% interval=0.94:0.01:1;   % for making camera centers collinear
-% interval=8:25;          % for varying number of initial points
+switch option
+    case 'noise'
+        interval=0:0.25:3;
+    case 'focal'
+        interval=20:20:300;
+    case 'points'
+        interval=[7:9,10:5:25];
+    case 'angle'
+        interval=[166:2:174,175:179,179.5,180];
+end
 
 %% Test the methods
 
@@ -29,8 +42,11 @@ method={...
     @LinearFPoseEstimation,...      % 7 - Linear Fundamental matrices
     @OptimFPoseEstimation};         % 8 - Fundamental matrices
 
-methods_to_test=[1:5,7:8];
-methods_to_test=1:3;
+if strcmp(option,'angle')
+    methods_to_test=1:8;
+else
+    methods_to_test=[1:5,7:8];
+end
 
 % error vectors
 repr_err=zeros(length(interval),length(method),2);
@@ -40,17 +56,36 @@ iter=zeros(length(interval),length(method),2);
 time=zeros(length(interval),length(method),2);
 
 for i=1:length(interval)
-    % change variable to the one to be varyied
-    noise=interval(i);
-    fprintf('Noise= %f\n', noise);
+    
+    switch option
+        case 'noise'
+            noise=interval(i);
+            fprintf('Noise= %fpix\n', noise);
+        case 'focal'
+            f=interval(i);
+            fprintf('Focal length= %dmm\n',f)
+        case 'points'
+            N=interval(i);
+            fprintf('Number of points used in estimation= %d\n',N)
+        case 'angle'
+            angle=interval(i);
+            fprintf('Angle between three centers= %f\n',angle)
+    end    
     
     for it=1:n_sim
         % Generate random data for a triplet of images
-        [CalM,R_t0,Corresp]=generateSyntheticScene(N+100,noise,it,f,p_coll);
+        [CalM,R_t0,Corresp]=generateSyntheticScene(N+100,noise,it,f,angle);
         rng(it);
         Corresp=Corresp(:,randsample(N+100,N));
         
         for m=methods_to_test
+            
+            if (m>6 && N<8) || N<7 % if not enough matches
+                repr_err(i,m,:)=inf;    rot_err(i,m,:)=inf;
+                t_err(i,m,:)=inf;       iter(i,m,:)=inf;
+                time(i,m,:)=inf;
+                continue;
+            end
             
             % pose estimation by method m, measuring time            
             t0=cputime;
@@ -94,8 +129,7 @@ end
 
 
 %% Plot results
-% methods_to_plot=1:6;        % All methods
-% methods_to_plot=[1:3,5:6];  % no collinear method
+
 methods_to_plot=methods_to_test;
 
 method_names={'Linear TFT','Ressl TFT','Nordberg','PapadFaug','Ponce&Hebert',...
@@ -166,6 +200,19 @@ title('Time for Bundle adjustment')
 legend(method_names(methods_to_plot),'Location','Best')
 
 
+%%
+switch option
+    case 'noise'
+        mat_file='varying_noise_M_12.mat';
+    case 'points'
+        mat_file='varying_M_noise_1.mat';
+    case 'focal'
+        mat_file='varying_f_M_12.mat';
+    case 'angle'
+        mat_file='varying_angle_M_13.mat';
+end
 
-
+save(mat_file,...
+    'interval', 'N', 'noise', 'f', 'angle', 'n_sim', 'methods_to_test',...
+    'option', 'repr_err', 'rot_err', 't_err', 'time', 'iter');
 
