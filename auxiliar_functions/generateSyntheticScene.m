@@ -1,4 +1,4 @@
-function [CalM,R_t,Corresp,points3D]=generateSyntheticScene(N,noise,seed,focalL,p_coll)
+function [CalM,R_t,Corresp,points3D]=generateSyntheticScene(N,noise,seed,focalL,angle)
 % Generates a synthetic scene composed of three cameras, N 3D points and
 % their projections onto the three images.
 %
@@ -8,7 +8,8 @@ function [CalM,R_t,Corresp,points3D]=generateSyntheticScene(N,noise,seed,focalL,
 %  seed     - seed for random generation of 3D points and noise
 %  focalL   - focal length. Changing this parameter from 50mm, will change 
 %             also the coordinates of the camera centers ans ppal axis
-%  p_coll   - parameter in [0,1] to make centers collinear (when =1)
+%  angle    - angle between the three centers in degrees. Should be in the
+%             interval [70,180], otherwise default scene is chosen
 %
 % Output arguments: 
 %  CalM     - 9x3 matrix containing the M calibration 3x3 matrices for 
@@ -22,6 +23,13 @@ function [CalM,R_t,Corresp,points3D]=generateSyntheticScene(N,noise,seed,focalL,
 %%% measurements in mm
 % sensor size 36x24mm --> image size 1800x1200 pixels 
 % (resolution 1mm=50pix)
+
+if isempty(angle) || angle<70 || angle>180
+    p_coll=0; % default setting
+else
+    angle=angle*pi./180;  % to radians
+    p_coll= 1- sin(angle)/(sqrt(2)*(cos(angle)-1));
+end
 
 %%% Calibration matrix (depends on the focal length)
 k=focalL/50; % focal length factor
