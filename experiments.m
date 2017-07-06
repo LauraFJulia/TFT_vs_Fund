@@ -6,8 +6,8 @@ clear; close all;
 %% Here uncomment the variable to vary to reproduce different experiments
 % option='noise';  % for varying noise
 % option='focal';  % for varying focal length
-option='points'; % for varying number of initial points
-% option='angle';  % for making camera centers collinear
+% option='points'; % for varying number of initial points
+option='angle';  % for making camera centers collinear
 
 
 %% Initial parameters
@@ -33,14 +33,14 @@ end
 %% Test the methods
 
 method={...
-    @LinearTFTPoseEstimation,...    % 1 - Linear TFT
-    @MinimalTFTPoseEstimation,...   % 2 - Minimal TFT (Ressl)
-    @NordbergTFTPoseEstimation,...  % 3 - Minimal TFT (Nordberg)
-    @PapaFaugTFTPoseEstimation,...  % 4 - Papadopoulo Faugeras TFT
-    @PiPoseEstimation,...           % 5 - Pi matrices (Ponce&Hebert)
-    @PiColPoseEstimation,...        % 6 - Pi matrices - collinear (Ponce&Hebert)
-    @LinearFPoseEstimation,...      % 7 - Linear Fundamental matrices
-    @OptimFPoseEstimation};         % 8 - Fundamental matrices
+    @LinearTFTPoseEstimation,...    % 1 - TFT Linear
+    @MinimalTFTPoseEstimation,...   % 2 - TFT Ressl
+    @NordbergTFTPoseEstimation,...  % 3 - TFT Nordberg
+    @PapaFaugTFTPoseEstimation,...  % 4 - TFT Papadopoulo&Faugeras
+    @PiPoseEstimation,...           % 5 - Pi matrices Ponce&Hebert
+    @PiColPoseEstimation,...        % 6 - Pi matrices Collinear Ponce&Hebert
+    @LinearFPoseEstimation,...      % 7 - Fundamental matrices Linear
+    @OptimFPoseEstimation};         % 8 - Fundamental matrices Optimized
 
 if strcmp(option,'angle')
     methods_to_test=1:8;
@@ -96,6 +96,10 @@ for i=1:length(interval)
             repr_err(i,m,1)= repr_err(i,m,1)+...
                 ReprError({CalM(1:3,:)*eye(3,4),...
                 CalM(4:6,:)*R_t_2,CalM(7:9,:)*R_t_3},Corresp,Reconst)/n_sim;
+            if ReprError({CalM(1:3,:)*eye(3,4),...
+                CalM(4:6,:)*R_t_2,CalM(7:9,:)*R_t_3},Corresp,Reconst)>100
+                fprintf('At iteration %d and method %d, the repr err was higher than 100\n',it,m);
+            end
             % angular errors
             [rot2_err,t2_err]=AngError(R_t0{1},R_t_2);
             [rot3_err,t3_err]=AngError(R_t0{2},R_t_3);
