@@ -64,19 +64,35 @@ o_w=atan2(vec_w'*[W(3,2)-W(2,3);W(1,3)-W(3,1);W(2,1)-W(1,2)]/2, (trace(W)-1)/2);
 % func=@(x)ls_orthog_matrices(x,T);
 % param = lsqnonlin(func,param0);
 
-Ts=transform_TFT(T,U,V,W,1);
+Ts=transf_t(T,U,V,W);
 paramT=Ts([1,7,10,12,16,19:22,25])';
-[~,iT]=max(abs(paramT));
-paramT=paramT/paramT(iT);
+paramT=paramT/norm(paramT);
+% [~,iT]=max(abs(paramT));
+% paramT=paramT/paramT(iT);
 
-param0=[vec_u*o_u; vec_v*o_v; vec_w*o_w;...
-    paramT([1:iT-1,iT+1:10])];
-func=@(x)ls_trilin(x,iT,[x1;x2;x3]);
-options = optimoptions(@lsqnonlin,'Display','off');
-[param,~,~,~,output] = lsqnonlin(func,param0,[],[],options);
-iter=output.iterations;
+% param0=[vec_u*o_u; vec_v*o_v; vec_w*o_w;...
+%     paramT([1:iT-1,iT+1:10])];
+% func=@(x)ls_trilin(x,iT,[x1;x2;x3]);
+% options = optimoptions(@lsqnonlin,'Display','off');
+% [param,~,~,~,output] = lsqnonlin(func,param0,[],[],options);
+% iter=output.iterations;
 
-% orthogonal matrices
+% compute 3d estimated points to have initial estimated reprojected image
+% points
+points3D=triangulation3D({P1,P2,P3},[x1;x2;x3]);
+p1_est=P1*points3D; p1_est=p1_est(1:2,:)./repmat(p1_est(3,:),2,1);
+p2_est=P2*points3D; p2_est=p2_est(1:2,:)./repmat(p2_est(3,:),2,1);
+p3_est=P3*points3D; p3_est=p3_est(1:2,:)./repmat(p3_est(3,:),2,1);
+
+% minimize reprojection error with Gauss-Helmert
+N=size(x1,2);
+param0=[vec_u*o_u; vec_v*o_v; vec_w*o_w;paramT];
+obs=reshape([x1(1:2,:);x2(1:2,:);x3(1:2,:)],6*N,1);
+obs_est=reshape([p1_est;p2_est;p3_est],6*N,1);
+y=zeros(0,1);
+[~,param,~,iter]=Gauss_Helmert(@constrGH,obs_est,param0,y,obs,eye(6*N));
+
+% recover orthogonal matrices
 o_u=norm(param(1:3)); vec_u=param(1:3)/o_u;
 o_v=norm(param(4:6)); vec_v=param(4:6)/o_v;
 o_w=norm(param(7:9)); vec_w=param(7:9)/o_w;
@@ -85,10 +101,9 @@ V=eye(3)+sin(o_v)*crossM(vec_v)+(1-cos(o_v))*crossM(vec_v)^2;
 W=eye(3)+sin(o_w)*crossM(vec_w)+(1-cos(o_w))*crossM(vec_w)^2;
 
 % sparse tensor
-paramT([1:iT-1,iT+1:10])=param(10:18);
 Ts=zeros(3,3,3);
-Ts([1,7,10,12,16,19:22,25])=paramT;
-T=transform_TFT(Ts,U',V',W',1);
+Ts([1,7,10,12,16,19:22,25])=param(10:19);
+T=transf_t(Ts,U',V',W');
 
 % denormalization
 T= transform_TFT(T,Normal1,Normal2,Normal3,1);
@@ -148,48 +163,116 @@ for i=1:N
     ind2=4*(i-1);
     S2=[0 -1; -1 0; x2(2) x2(1)];
     S3=[0 -1; -1 0; x3(2) x3(1)];
-    f(ind2+1:ind2+4)=reshape( S2.'*(x1(1)*T(:,:,1)+x1(2)*T(:,:,2)+T(:,:,3))*S3,4,1);
+    f(ind2+1:ind2+4)=reshape( S2'*(x1(1)*T(:,:,1)+x1(2)*T(:,:,2)+T(:,:,3))*S3,4,1);
 end
 
 end
-% 
-% function f=ls_repr(x,iT,obs,CalM)
-% 
-% % orthogonal matrices
-% o_u=norm(x(1:3)); vec_u=x(1:3)/o_u;
-% o_v=norm(x(4:6)); vec_v=x(4:6)/o_v;
-% o_w=norm(x(7:9)); vec_w=x(7:9)/o_w;
-% U=eye(3)+sin(o_u)*crossM(vec_u)+(1-cos(o_u))*crossM(vec_u)^2;
-% V=eye(3)+sin(o_v)*crossM(vec_v)+(1-cos(o_v))*crossM(vec_v)^2;
-% W=eye(3)+sin(o_w)*crossM(vec_w)+(1-cos(o_w))*crossM(vec_w)^2;
-% 
-% % sparse tensor
-% paramT=ones(10,1);
-% paramT([1:iT-1,iT+1:10])=x(10:18);
-% Ts=zeros(3,3,3);
-% Ts([1,7,10,12,16,19:22,25])=paramT;
-% 
-% % original tensor
-% T=transform_TFT(Ts,U',V',W',1);
-% [R_t_2,R_t_3]=R_t_from_TFT(T,CalM,obs);
-% P1=CalM(1:3,:)*eye(3,4);
-% P2=CalM(1:3,:)*R_t_2;
-% P3=CalM(7:9,:)*R_t_3;
-% Pcam={P1,P2,P3};
-% X=triangulation3D({P1,P2,P3},obs);
-% 
-% N=size(obs,2);
-% f=zeros(2*3*N,1);
-% for i=1:N
-%     P=X(:,i);
-%     for j=1:3
-%         p=obs(2*(j-1)+1,i);
-%         p_est=Pcam{j}*P; p_est=p_est(1:2)/p_est(3);
-%         f(6*(i-1)+2*(j-1)+(1:2))=p-p_est;
-%     end
-% end
-% 
-% end
+
+
+
+
+function [f,g,A,B,C,D]=constrGH(obs,x,~)
+
+% orthogonal matrices
+o_u=norm(x(1:3)); vec_u=x(1:3)/o_u;
+o_v=norm(x(4:6)); vec_v=x(4:6)/o_v;
+o_w=norm(x(7:9)); vec_w=x(7:9)/o_w;
+U=eye(3)+sin(o_u)*crossM(vec_u)+(1-cos(o_u))*crossM(vec_u)^2;
+V=eye(3)+sin(o_v)*crossM(vec_v)+(1-cos(o_v))*crossM(vec_v)^2;
+W=eye(3)+sin(o_w)*crossM(vec_w)+(1-cos(o_w))*crossM(vec_w)^2;
+
+% sparse tensor
+paramT=x(10:19);
+Ts=zeros(3,3,3);
+param_ind=[1,7,10,12,16,19:22,25];
+Ts(param_ind)=paramT;
+
+% original tensor
+T=transf_t(Ts,U',V',W');
+
+obs=reshape(obs,6,[]);
+N=size(obs,2);
+
+f=zeros(4*N,1);
+Ap=zeros(4*N,27);
+B=zeros(4*N,6*N);
+for i=1:N
+    % points in the three images for correspondance i
+    x1=obs(1:2,i); x2=obs(3:4,i); x3=obs(5:6,i);
+    
+    % 4 trilinearities
+    ind2=4*(i-1);
+    S2=[0 -1; -1 0; x2(2) x2(1)];
+    S3=[0 -1; -1 0; x3(2) x3(1)];
+    f(ind2+1:ind2+4)=reshape( S2'*(x1(1)*T(:,:,1)+x1(2)*T(:,:,2)+T(:,:,3))*S3,4,1);
+    
+    % Jacobians for the trilinearities
+    Ap(ind2+1:ind2+4,:)=kron(S3,S2)'*kron([x1;1]',eye(9));
+    B(ind2+1:ind2+4,6*(i-1)+1)=reshape(S2'*T(:,:,1)*S3,4,1);
+    B(ind2+1:ind2+4,6*(i-1)+2)=reshape(S2'*T(:,:,2)*S3,4,1);
+    B(ind2+1:ind2+4,6*(i-1)+(3:4))=kron(S3'*reshape(T(3,:,:),3,3)*[x1;1],[0,1;1,0]);
+    B(ind2+1:ind2+4,6*(i-1)+(5:6))=kron([0,1;1,0],S2'*reshape(T(:,3,:),3,3)*[x1;1]);
+end
+
+J=zeros(27,19);
+% derivatives of the parameterization w.r.t. the sparse tensor
+for i=1:10
+    e=zeros(3,3,3); e(param_ind(i))=1;
+    J(:,i+9)=reshape(transf_t(e,U',V',W'),27,1);
+end
+% derivatives of the parameterization w.r.t. the orthogonal matrices
+dU=zeros(3,3,3); dV=zeros(3,3,3); dW=zeros(3,3,3);
+e=eye(3);
+for i=1:3
+    dU(:,:,i)=-vec_u(i)*sin(o_u)*eye(3)+ vec_u(i)*cos(o_u)*crossM(vec_u)+...
+        sin(o_u)*(1/o_u)*(crossM(e(:,i))- vec_u(i)*crossM(vec_u))+...
+        vec_u(i)*sin(o_u)*(vec_u*vec_u')+...
+        (1-cos(o_u))*(1/o_u)*(vec_u*e(i,:)+e(:,i)*vec_u'-2*vec_u(i)*(vec_u*vec_u'));
+    
+    dV(:,:,i)=-vec_v(i)*sin(o_v)*eye(3)+ vec_v(i)*cos(o_v)*crossM(vec_v)+...
+        sin(o_v)*(1/o_v)*(crossM(e(:,i))- vec_v(i)*crossM(vec_v))+...
+        vec_v(i)*sin(o_v)*(vec_v*vec_v')+...
+        (1-cos(o_v))*(1/o_v)*(vec_v*e(i,:)+e(:,i)*vec_v'-2*vec_v(i)*(vec_v*vec_v'));
+    
+    dW(:,:,i)=-vec_w(i)*sin(o_w)*eye(3)+ vec_w(i)*cos(o_w)*crossM(vec_w)+...
+        sin(o_w)*(1/o_w)*(crossM(e(:,i))- vec_w(i)*crossM(vec_w))+...
+        vec_w(i)*sin(o_w)*(vec_w*vec_w')+...
+        (1-cos(o_w))*(1/o_w)*(vec_w*e(i,:)+e(:,i)*vec_w'-2*vec_w(i)*(vec_w*vec_w'));
+end
+    
+for i=1:3
+    J(:,i)=reshape(transf_t(Ts,dU(:,:,i)',V',W'),27,1);
+    J(:,i+3)=reshape(transf_t(Ts,U',dV(:,:,i)',W'),27,1);
+    J(:,i+6)=reshape(transf_t(Ts,U',V',dW(:,:,i)'),27,1);
+end
+
+A=Ap*J;
+
+
+
+g=sum(paramT.^2)-1;
+C=zeros(1,19);
+C(1,10:19)=2*paramT';
+D=zeros(1,0);
+
+
+
+end
+
+
+
+
+function T=transf_t(T0,U,V,W)
+
+T=zeros(3,3,3);
+for i=1:3
+    T(:,:,i)=V' *(U(1,i)*T0(:,:,1) +U(2,i)*T0(:,:,2) +U(3,i)*T0(:,:,3))* W;
+end
+
+end
+
+
+
 
 
 
