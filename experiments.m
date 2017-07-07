@@ -1,4 +1,4 @@
-% Script to recreate experiments on synthetic data for the ICIP paper 
+% Script to recreate experiments on synthetic data for the PSIVT paper 
 %  submission "A Critical Review of the Trifocal Tensor Estimation"
 
 clear; close all;
@@ -96,10 +96,7 @@ for i=1:length(interval)
             repr_err(i,m,1)= repr_err(i,m,1)+...
                 ReprError({CalM(1:3,:)*eye(3,4),...
                 CalM(4:6,:)*R_t_2,CalM(7:9,:)*R_t_3},Corresp,Reconst)/n_sim;
-            if ReprError({CalM(1:3,:)*eye(3,4),...
-                CalM(4:6,:)*R_t_2,CalM(7:9,:)*R_t_3},Corresp,Reconst)>100
-                fprintf('At iteration %d and method %d, the repr err was higher than 100\n',it,m);
-            end
+            
             % angular errors
             [rot2_err,t2_err]=AngError(R_t0{1},R_t_2);
             [rot3_err,t3_err]=AngError(R_t0{2},R_t_3);
