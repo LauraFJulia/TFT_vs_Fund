@@ -12,10 +12,12 @@ dataset='fountain-P11';  % for varying noise
 %% Some parameters
 path_to_data=strcat('Data/',dataset,'/');
 
-triplets_to_evaluate=1:10;
+triplets_to_evaluate=1:70;
 
 initial_sample_size=100;
-bundle_adj_size=100;
+bundle_adj_size=50;
+
+repr_err_th=20;
 
 %% Recover correspondances
 
@@ -38,7 +40,6 @@ method={...
     @OptimFPoseEstimation};         % 8 - Fundamental matrices
 
 methods_to_test=[1:5,7:8];
-
 
 %% error vectors
 repr_err=zeros(length(triplets_to_evaluate),length(method),2);
@@ -67,22 +68,37 @@ for it=1:length(triplets_to_evaluate)
     R_t0={[R2_true*R1_true.', t2_true-R2_true*R1_true.'*t1_true],...
         [R3_true*R1_true.' t3_true-R3_true*R1_true.'*t1_true]};
     
-    % RANSAC with fundamental matrices
-    a=2*sqrt((2*K1(1,3))^2+(2*K1(2,3))^2)/(4*K1(1,3)*K1(2,3));
-    inliers21=AC_RANSAC({Corresp(1:2,:),Corresp(3:4,:)},@fundamental_model_ransac,N,8,1,a,1,1,40);
-    inliers31=AC_RANSAC({Corresp(1:2,:),Corresp(5:6,:)},@fundamental_model_ransac,N,8,1,a,1,1,40);
-    inliers32=AC_RANSAC({Corresp(3:4,:),Corresp(5:6,:)},@fundamental_model_ransac,N,8,1,a,1,1,40);
-    inliers=intersect(intersect(inliers21,inliers31),inliers32);
-    fprintf('Ransac found %d inliers out of %d.\n',size(inliers,2),N);
+    %%% Discart correspondances with repr_err > 1 pix
+    Reconst0=triangulation3D({K1*eye(3,4),K2*R_t0{1},K3*R_t0{2}},Corresp);
+    Reconst0=bsxfun(@rdivide,Reconst0(1:3,:),Reconst0(4,:));
+    Corresp_new=project3Dpoints(Reconst0,CalM,[eye(3,4);R_t0{1};R_t0{2}]);
+    residuals=Corresp_new-Corresp;
+    mask=sum(abs(residuals)>repr_err_th,1)==0;
+    Corresp=Corresp(:,mask);
+    N=size(Corresp,2);
+    repr_err=ReprError({K1*eye(3,4),K2*R_t0{1},K3*R_t0{2}},Corresp);
+    fprintf('%d valid correspondances with reprojection error %f.\n',N,repr_err);
     
+%     % RANSAC with fundamental matrices
+%     %a=2*sqrt((2*K1(1,3))^2+(2*K1(2,3))^2)/(4*K1(1,3)*K1(2,3));
+%     a=4*norm(im_size)^2/((im_size(1)*im_size(2))^2);
+%     inliers21=AC_RANSAC({Corresp(1:2,:),Corresp(3:4,:)},@fundamental_model_ransac,N,8,1,a,1,1,40);
+%     inliers31=AC_RANSAC({Corresp(1:2,:),Corresp(5:6,:)},@fundamental_model_ransac,N,8,1,a,1,1,40);
+%     inliers32=AC_RANSAC({Corresp(3:4,:),Corresp(5:6,:)},@fundamental_model_ransac,N,8,1,a,1,1,40);
+%     inliers=intersect(intersect(inliers21,inliers31),inliers32);
+%     fprintf('Ransac found %d inliers out of %d.\n',size(inliers,2),N);
+    inliers=1:N; % test without ransac
+
     % samples for initial estimation and bundle adjustment
+    Corresp_inliers=Corresp(:,inliers);
     init_sample=randsample(inliers,min(initial_sample_size,length(inliers)));
     ref_sample=randsample(init_sample,min(bundle_adj_size,size(init_sample,2)));
-    Corresp_i=Corresp(:,init_sample);
-    Corresp_r=Corresp(:,ref_sample);
+    Corresp_init=Corresp(:,init_sample);
+    Corresp_ref=Corresp(:,ref_sample);
     
+    fprintf('method... ');
     for m=methods_to_test
-        
+        fprintf('%d ',m);
         if (m>6 && N<8) || N<7 % if not enough matches
             repr_err(it,m,:)=inf;    rot_err(it,m,:)=inf;
             t_err(it,m,:)=inf;       iter(it,m,:)=inf;
@@ -92,12 +108,12 @@ for it=1:length(triplets_to_evaluate)
         
         % % Pose estimation by method m, measuring time            
         t0=cputime;
-        [R_t_2,R_t_3,~,~,nit]=method{m}(Corresp_i,CalM);
+        [R_t_2,R_t_3,~,~,nit]=method{m}(Corresp_init,CalM);
         t=cputime-t0;
         
         % reprojection error with all inliers
         repr_err(it,m,1)= ReprError({CalM(1:3,:)*eye(3,4),...
-            CalM(4:6,:)*R_t_2,CalM(7:9,:)*R_t_3},Corresp);
+            CalM(4:6,:)*R_t_2,CalM(7:9,:)*R_t_3},Corresp_inliers);
         % angular errors
         [rot2_err,t2_err]=AngError(R_t0{1},R_t_2);
         [rot3_err,t3_err]=AngError(R_t0{2},R_t_3);
@@ -107,16 +123,17 @@ for it=1:length(triplets_to_evaluate)
         iter(it,m,1)=nit; time(it,m,1)=t;
         
         
+        fprintf('(ref)... ');
         % % Apply Bundle Adjustment
         t0=cputime;
         [R_t_ref,~,nit,repr_errBA]=BundleAdjustment(CalM,...
-            [eye(3,4);R_t_2;R_t_3],Corresp_r);
+            [eye(3,4);R_t_2;R_t_3],Corresp_ref);
         t=cputime-t0;
 
         % reprojection error with all inliers
         repr_err(it,m,2)= ReprError({CalM(1:3,:)*R_t_ref(1:3,:),...
             CalM(4:6,:)*R_t_ref(4:6,:),...
-            CalM(7:9,:)*R_t_ref(7:9,:)},Corresp);
+            CalM(7:9,:)*R_t_ref(7:9,:)},Corresp_inliers);
         % angular errors
         [rot2_err,t2_err]=AngError(R_t0{1},R_t_ref(4:6,:));
         [rot3_err,t3_err]=AngError(R_t0{2},R_t_ref(7:9,:));
@@ -126,12 +143,13 @@ for it=1:length(triplets_to_evaluate)
         iter(it,m,2)=nit; time(it,m,2)=t;
         
     end
+    fprintf('\n');
     
 end
 
 %%
 
-save errors_1_to_70_triplets_Strecha.mat repr_err rot_err t_err iter time...
+save Results/errors_1_to_70_triplets_Strecha_100i_50r.mat repr_err rot_err t_err iter time...
     methods_to_test method dataset triplets_to_evaluate initial_sample_size...
     bundle_adj_size
 
@@ -150,7 +168,7 @@ end
 
 %% Means only for valid triplets
 
-rot_err_thresh=0.05;
+rot_err_thresh=5;
 trans_err_thresh=10;
 
 
@@ -180,6 +198,10 @@ for m=methods_to_test
 end
 
 %% latex table
+
+
+
+
 
 
 
