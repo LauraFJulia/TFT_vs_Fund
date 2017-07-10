@@ -5,8 +5,8 @@ clear; close all;
 
 
 %% Here uncomment the dataset to use.
-% dataset='fountain-P11';  
-dataset='Herz-Jesu-P8';
+dataset='fountain-P11';  
+% dataset='Herz-Jesu-P8';
 
 
 %% Some parameters
@@ -213,17 +213,64 @@ mod=[1:5,7:8];
 
 input.data=zeros(8,5);
 input.data=[[means_all(mod,[1:3,5],1),means_all(mod,4,2)];...
-    [means_all(1,1:3,2),nan,nan]];
+    [means_all(1,1:3,2),NaN,NaN]];
 
-
-input.tableColLabels = {'repr. err. (px)', 'R err','T err','initial time (s)','iter. BA'};
-input.tableRowLabels = {'TFT-L','TFT-R','TFT-N','TFT-PF','TFT-PH', 'F-L', 'F-O', 'BA'};
-input.dataFormat = {'%.4f',1,'%.3f',2,'%.2f',2}; 
+input.tableColLabels = {'repr. err. (px)', '\textsf{R} err.','\textsf{t} err.','init. time (s)','iter. BA'};
+input.tableRowLabels = {'\textsf{TFT-L}','\textsf{TFT-R}','\textsf{TFT-N}',...
+    '\textsf{TFT-PF}','\textsf{TFT-PH}', '\textsf{F-L}', '\textsf{F-O}', '\textsf{BA}'};
+input.dataFormat = {'%.3f',3,'%.2f',2}; 
 input.dataNanString = ' ';
+
 
 latex = latexTable(input);
 
 
+
+
+%% plot scene
+
+switch dataset
+    case 'fountain-P11'
+        num_cam=11;
+    case 'Herz-Jesu-P8'
+        num_cam=8;
+end
+    
+cam_centers=zeros(3,num_cam);
+for im=1:num_cam
+    [K,R,t]=readCalibrationOrientation_Strecha(path_to_data,im_names{im});
+    cam_centers(:,im)=-R'*t;
+end
+figure;
+scatter3(cam_centers(1,:),cam_centers(2,:),cam_centers(3,:));
+
+% compute angles
+angles=zeros(length(triplets_to_evaluate),1);
+for it=1:length(triplets_to_evaluate)
+    
+    triplet=indexes_sorted(triplets_to_evaluate(it) ,1:3); 
+    im1=triplet(1); im2=triplet(2);  im3=triplet(3);
+    
+    % Calibration info
+    [K1,R1,t1]=readCalibrationOrientation_Strecha(path_to_data,im_names{im1});
+    [K2,R2,t2]=readCalibrationOrientation_Strecha(path_to_data,im_names{im2});
+    [K3,R3,t3]=readCalibrationOrientation_Strecha(path_to_data,im_names{im3});
+    C1=-R1'*t1; C2=-R2'*t2; C3=-R3'*t3;
+    a=C2-C1; a=a/norm(a); 
+    b=C3-C1; b=b/norm(b);
+    c=C3-C2; c=c/norm(c);
+    
+    angle1=acos(a'*b)*180/pi;
+    angle2=acos(-a'*c)*180/pi;
+    angle3=acos(b'*c)*180/pi;
+    angles(it)=max([angle1,angle2,angle3]);
+    %fprintf('Triplet %d/%d (%d,%d,%d) with angle %f.\n',...
+    %    it,length(triplets_to_evaluate),im1,im2,im3,angle);
+end
+
+figure;
+N=histc(angles,90:5:180);
+bar(90:5:180,N,'histc')
 
 
 
