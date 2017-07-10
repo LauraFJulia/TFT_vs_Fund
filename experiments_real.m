@@ -17,7 +17,7 @@ triplets_to_evaluate=1:70;
 initial_sample_size=100;
 bundle_adj_size=50;
 
-repr_err_th=20;
+repr_err_th=30;
 
 %% Recover correspondances
 
@@ -151,7 +151,7 @@ end
 
 save Results/errors_1_to_70_triplets_Strecha_100i_50r.mat repr_err rot_err t_err iter time...
     methods_to_test method dataset triplets_to_evaluate initial_sample_size...
-    bundle_adj_size
+    bundle_adj_size repr_err_th
 
 
 %% Means for all triplets
@@ -199,7 +199,19 @@ end
 
 %% latex table
 
+mod=[1:5,7:8];
 
+input.data=zeros(8,5);
+input.data=[[means_all(mod,[1:3,5],1),means_all(mod,4,2)];...
+    [means_all(1,1:3,2),nan,nan]];
+
+
+input.tableColLabels = {'repr. err. (px)', 'R err','T err','initial time (s)','iter. BA'};
+input.tableRowLabels = {'TFT-L','TFT-R','TFT-N','TFT-PF','TFT-PH', 'F-L', 'F-O', 'BA'};
+input.dataFormat = {'%.3f',3,'%.2f',1}; 
+input.dataNanString = ' ';
+
+latex = latexTable(input);
 
 
 
