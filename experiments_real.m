@@ -5,14 +5,19 @@ clear; close all;
 
 
 %% Here uncomment the dataset to use.
-dataset='fountain-P11';  % for varying noise
-
+dataset='fountain-P11';  
+% dataset='Herz-Jesu-P8';
 
 
 %% Some parameters
 path_to_data=strcat('Data/',dataset,'/');
 
-triplets_to_evaluate=1:70;
+switch dataset
+    case 'fountain-P11'
+        triplets_to_evaluate=1:70;
+    case 'Herz-Jesu-P8'
+        triplets_to_evaluate=1:50;
+end
 
 initial_sample_size=100;
 bundle_adj_size=50;
@@ -149,7 +154,7 @@ end
 
 %%
 
-save Results/errors_1_to_70_triplets_Strecha_100i_50r.mat repr_err rot_err t_err iter time...
+save Results/errors_1_to_70_triplets_HerzJesu_200i_50r.mat repr_err rot_err t_err iter time...
     methods_to_test method dataset triplets_to_evaluate initial_sample_size...
     bundle_adj_size repr_err_th
 
@@ -208,7 +213,7 @@ input.data=[[means_all(mod,[1:3,5],1),means_all(mod,4,2)];...
 
 input.tableColLabels = {'repr. err. (px)', 'R err','T err','initial time (s)','iter. BA'};
 input.tableRowLabels = {'TFT-L','TFT-R','TFT-N','TFT-PF','TFT-PH', 'F-L', 'F-O', 'BA'};
-input.dataFormat = {'%.3f',3,'%.2f',1}; 
+input.dataFormat = {'%.4f',1,'%.3f',2,'%.2f',2}; 
 input.dataNanString = ' ';
 
 latex = latexTable(input);
