@@ -5,8 +5,8 @@ clear; close all;
 
 
 %% Here uncomment the dataset to use.
-dataset='fountain-P11';  
-% dataset='Herz-Jesu-P8';
+% dataset='fountain-P11';  
+dataset='Herz-Jesu-P8';
 
 
 %% Some parameters
@@ -22,7 +22,7 @@ end
 initial_sample_size=100;
 bundle_adj_size=50;
 
-repr_err_th=30;
+repr_err_th=20;
 
 %% Recover correspondances
 
@@ -81,8 +81,8 @@ for it=1:length(triplets_to_evaluate)
     mask=sum(abs(residuals)>repr_err_th,1)==0;
     Corresp=Corresp(:,mask);
     N=size(Corresp,2);
-    repr_err=ReprError({K1*eye(3,4),K2*R_t0{1},K3*R_t0{2}},Corresp);
-    fprintf('%d valid correspondances with reprojection error %f.\n',N,repr_err);
+    REr=ReprError({K1*eye(3,4),K2*R_t0{1},K3*R_t0{2}},Corresp);
+    fprintf('%d valid correspondances with reprojection error %f.\n',N,REr);
     
 %     % RANSAC with fundamental matrices
 %     %a=2*sqrt((2*K1(1,3))^2+(2*K1(2,3))^2)/(4*K1(1,3)*K1(2,3));
@@ -96,7 +96,9 @@ for it=1:length(triplets_to_evaluate)
 
     % samples for initial estimation and bundle adjustment
     Corresp_inliers=Corresp(:,inliers);
+    rng(it);
     init_sample=randsample(inliers,min(initial_sample_size,length(inliers)));
+    rng(it);
     ref_sample=randsample(init_sample,min(bundle_adj_size,size(init_sample,2)));
     Corresp_init=Corresp(:,init_sample);
     Corresp_ref=Corresp(:,ref_sample);
@@ -154,10 +156,13 @@ end
 
 %%
 
-save Results/errors_1_to_70_triplets_HerzJesu_200i_50r.mat repr_err rot_err t_err iter time...
+%save Results/errors_1_to_70_triplets_fountain_100i_50r_40_reprinliers.mat repr_err rot_err t_err iter time...
+%    methods_to_test method dataset triplets_to_evaluate initial_sample_size...
+%    bundle_adj_size repr_err_th
+
+save Results/errors_1_to_50_triplets_herzjesu_100i_50r_20_reprinliers.mat repr_err rot_err t_err iter time...
     methods_to_test method dataset triplets_to_evaluate initial_sample_size...
     bundle_adj_size repr_err_th
-
 
 %% Means for all triplets
 
