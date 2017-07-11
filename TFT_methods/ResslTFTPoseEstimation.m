@@ -1,4 +1,4 @@
-function [R_t_2,R_t_3,Reconst,T,iter]=MinimalTFTPoseEstimation(Corresp,CalM)
+function [R_t_2,R_t_3,Reconst,T,iter]=ResslTFTPoseEstimation(Corresp,CalM)
 % Pose estimation of 3 views from corresponding triplets of points using
 % the minimal TriFocal Tensor.
 %

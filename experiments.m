@@ -14,7 +14,7 @@ option='angle';  % for making camera centers collinear
 N=12;       % number of 3D points
 noise=1;    % sigma for the added Gaussian noise in pixels
 f=50;       % focal length in mm
-angle=0;   % no collinearity of camera centers
+angle=0;    % no collinearity of camera centers
 n_sim=20;   % number of simulations of data
 
 %% Interval
@@ -32,15 +32,15 @@ end
 
 %% Test the methods
 
-method={...
-    @LinearTFTPoseEstimation,...    % 1 - TFT Linear
-    @MinimalTFTPoseEstimation,...   % 2 - TFT Ressl
-    @NordbergTFTPoseEstimation,...  % 3 - TFT Nordberg
-    @PapaFaugTFTPoseEstimation,...  % 4 - TFT Papadopoulo&Faugeras
-    @PiPoseEstimation,...           % 5 - Pi matrices Ponce&Hebert
-    @PiColPoseEstimation,...        % 6 - Pi matrices Collinear Ponce&Hebert
-    @LinearFPoseEstimation,...      % 7 - Fundamental matrices Linear
-    @OptimFPoseEstimation};         % 8 - Fundamental matrices Optimized
+methods={...
+    @LinearTFTPoseEstimation,...    % 1 - TFT - Linear estimation
+    @ResslTFTPoseEstimation,...     % 2 - TFT - Ressl
+    @NordbergTFTPoseEstimation,...  % 3 - TFT - Nordberg
+    @PapaFaugTFTPoseEstimation,...  % 4 - TFT - Papadopoulo&Faugeras 
+    @PiPoseEstimation,...           % 5 - Pi matrices - Ponce&Hebert
+    @PiColPoseEstimation,...        % 6 - Pi matrices - Ponce&Hebert for collinear cameras
+    @LinearFPoseEstimation,...      % 7 - Fundamental matrices - Linear estimation
+    @OptimFPoseEstimation};         % 8 - Fundamental matrices - Optimized
 
 if strcmp(option,'angle')
     methods_to_test=1:8;
@@ -49,11 +49,11 @@ else
 end
 
 % error vectors
-repr_err=zeros(length(interval),length(method),2);
-rot_err=zeros(length(interval),length(method),2);
-t_err=zeros(length(interval),length(method),2);
-iter=zeros(length(interval),length(method),2);
-time=zeros(length(interval),length(method),2);
+repr_err=zeros(length(interval),length(methods),2);
+rot_err=zeros(length(interval),length(methods),2);
+t_err=zeros(length(interval),length(methods),2);
+iter=zeros(length(interval),length(methods),2);
+time=zeros(length(interval),length(methods),2);
 
 for i=1:length(interval)
     
@@ -89,7 +89,7 @@ for i=1:length(interval)
             
             % pose estimation by method m, measuring time            
             t0=cputime;
-            [R_t_2,R_t_3,Reconst,~,nit]=method{m}(Corresp,CalM);
+            [R_t_2,R_t_3,Reconst,~,nit]=methods{m}(Corresp,CalM);
             t=cputime-t0;
             
             % reprojection error

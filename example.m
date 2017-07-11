@@ -13,12 +13,14 @@ p_coll=0;   % no collinearity of camera centers
 %% Test a method
 
 method={...
-    @LinearTFTPoseEstimation,...    % 1 - Linear TFT
-    @MinimalTFTPoseEstimation,...   % 2 - Minimal TFT (Ressl)
-    @PiPoseEstimation,...           % 3 - Pi matrices (Ponce&Hebert)
-    @PiColPoseEstimation,...        % 4 - Pi matrices - collinear (Ponce&Hebert)
-    @LinearFPoseEstimation,...      % 5 - Linear Fundamental matrices
-    @OptimFPoseEstimation};         % 6 - Fundamental matrices
+    @LinearTFTPoseEstimation,...    % 1 - TFT - Linear estimation
+    @ResslTFTPoseEstimation,...     % 2 - TFT - Ressl
+    @NordbergTFTPoseEstimation,...  % 3 - TFT - Nordberg
+    @PapaFaugTFTPoseEstimation,...  % 4 - TFT - Papadopoulo&Faugeras 
+    @PiPoseEstimation,...           % 5 - Pi matrices - Ponce&Hebert
+    @PiColPoseEstimation,...        % 6 - Pi matrices - Ponce&Hebert for collinear cameras
+    @LinearFPoseEstimation,...      % 7 - Fundamental matrices - Linear estimation
+    @OptimFPoseEstimation};         % 8 - Fundamental matrices - Optimized
 
 [R_t_2,R_t_3,Reconst]=method{6}(Corresp,CalM);
 

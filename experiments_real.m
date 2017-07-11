@@ -5,109 +5,100 @@ clear; close all;
 
 
 %% Here uncomment the dataset to use.
+
 % dataset='fountain-P11';  
 dataset='Herz-Jesu-P8';
 
-
 %% Some parameters
+
 path_to_data=strcat('Data/',dataset,'/');
 
 switch dataset
     case 'fountain-P11'
-        triplets_to_evaluate=1:70;
-        repr_err_th=1;
+        triplets_to_test=1:70;
     case 'Herz-Jesu-P8'
-        triplets_to_evaluate=1:50;
-        repr_err_th=1;
+        triplets_to_test=1:50;
 end
 
 initial_sample_size=100;
 bundle_adj_size=50;
+repr_err_th=1;
 
 
 %% Recover correspondances
 
-corresp_file=matfile(strcat(path_to_data,'Corresp_triplets','.mat'));
-indexes_sorted=corresp_file.indexes_sorted;
-corresp_by_triplet=corresp_file.Corresp;
-im_names=corresp_file.im_names;
+corresp_file = matfile(strcat(path_to_data,'Corresp_triplets','.mat'));
+indexes_sorted = corresp_file.indexes_sorted;
+corresp_by_triplet = corresp_file.Corresp;
+im_names = corresp_file.im_names;
 clear corresp_file;
 
 %% methods to evaluate
 
-method={...
-    @LinearTFTPoseEstimation,...    % 1 - Linear TFT
-    @MinimalTFTPoseEstimation,...   % 2 - Minimal TFT (Ressl)
-    @NordbergTFTPoseEstimation,...  % 3 - Minimal TFT (Nordberg)
-    @PapaFaugTFTPoseEstimation,...  % 4 - Papadopoulo Faugeras TFT
-    @PiPoseEstimation,...           % 5 - Pi matrices (Ponce&Hebert)
-    @PiColPoseEstimation,...        % 6 - Pi matrices - collinear (Ponce&Hebert)
-    @LinearFPoseEstimation,...      % 7 - Linear Fundamental matrices
-    @OptimFPoseEstimation};         % 8 - Fundamental matrices
+methods={...
+    @LinearTFTPoseEstimation,...    % 1 - TFT - Linear estimation
+    @ResslTFTPoseEstimation,...     % 2 - TFT - Ressl
+    @NordbergTFTPoseEstimation,...  % 3 - TFT - Nordberg
+    @PapaFaugTFTPoseEstimation,...  % 4 - TFT - Papadopoulo&Faugeras 
+    @PiPoseEstimation,...           % 5 - Pi matrices - Ponce&Hebert
+    @PiColPoseEstimation,...        % 6 - Pi matrices - Ponce&Hebert for collinear cameras
+    @LinearFPoseEstimation,...      % 7 - Fundamental matrices - Linear estimation
+    @OptimFPoseEstimation};         % 8 - Fundamental matrices - Optimized
 
-methods_to_test=[1:5,7:8];
+methods_to_test=[1:5,7:8]; % no method for collinear cameras
 
 %% error vectors
-repr_err=zeros(length(triplets_to_evaluate),length(method),2);
-rot_err=zeros(length(triplets_to_evaluate),length(method),2);
-t_err=zeros(length(triplets_to_evaluate),length(method),2);
-iter=zeros(length(triplets_to_evaluate),length(method),2);
-time=zeros(length(triplets_to_evaluate),length(method),2);
+repr_err = zeros(length(triplets_to_test),length(methods),2);
+rot_err  = zeros(length(triplets_to_test),length(methods),2);
+t_err    = zeros(length(triplets_to_test),length(methods),2);
+iter     = zeros(length(triplets_to_test),length(methods),2);
+time     = zeros(length(triplets_to_test),length(methods),2);
 
 %% evaluation
 
-for it=1:length(triplets_to_evaluate)
+for it=1:length(triplets_to_test)
     
-    triplet=indexes_sorted(triplets_to_evaluate(it) ,1:3); 
+    % Triplet information and correspondances
+    triplet=indexes_sorted(triplets_to_test(it) ,1:3); 
     im1=triplet(1); im2=triplet(2);  im3=triplet(3);
     Corresp=corresp_by_triplet{im1,im2,im3}';
     N=size(Corresp,2);
-    
     fprintf('Triplet %d/%d (%d,%d,%d) with %d matching points.\n',...
-        it,length(triplets_to_evaluate),im1,im2,im3,N);
+        it,length(triplets_to_test),im1,im2,im3,N);
     
-    % Calibration info
-    [K1,R1_true,t1_true,im_size1]=readCalibrationOrientation_Strecha(path_to_data,im_names{im1});
+    % Ground truth poses and calibration
+    [K1,R1_true,t1_true,im_size]=readCalibrationOrientation_Strecha(path_to_data,im_names{im1});
     [K2,R2_true,t2_true]=readCalibrationOrientation_Strecha(path_to_data,im_names{im2});
     [K3,R3_true,t3_true]=readCalibrationOrientation_Strecha(path_to_data,im_names{im3});
-    CalM=[K1;K2;K3]; im_size=im_size1;
+    CalM=[K1;K2;K3];
     R_t0={[R2_true*R1_true.', t2_true-R2_true*R1_true.'*t1_true],...
-        [R3_true*R1_true.' t3_true-R3_true*R1_true.'*t1_true]};
+          [R3_true*R1_true.', t3_true-R3_true*R1_true.'*t1_true]};
     
-    %%% Discart correspondances with repr_err > 1 pix
+    % Discart correspondances with repr_err > 1 pix
     Reconst0=triangulation3D({K1*eye(3,4),K2*R_t0{1},K3*R_t0{2}},Corresp);
     Reconst0=bsxfun(@rdivide,Reconst0(1:3,:),Reconst0(4,:));
     Corresp_new=project3Dpoints(Reconst0,CalM,[eye(3,4);R_t0{1};R_t0{2}]);
-    residuals=Corresp_new-Corresp;
-    mask=sum(abs(residuals)>repr_err_th,1)==0;
-    Corresp=Corresp(:,mask);
-    N=size(Corresp,2);
-    REr=ReprError({K1*eye(3,4),K2*R_t0{1},K3*R_t0{2}},Corresp);
+    residuals=Corresp_new-Corresp; % reprojection error
+    Corresp_inliers=Corresp(:, sum(abs(residuals)>repr_err_th,1)==0 );
+    N=size(Corresp_inliers,2);
+    REr=ReprError({K1*eye(3,4),K2*R_t0{1},K3*R_t0{2}},Corresp_inliers);
     fprintf('%d valid correspondances with reprojection error %f.\n',N,REr);
-    
-%     % RANSAC with fundamental matrices
-%     %a=2*sqrt((2*K1(1,3))^2+(2*K1(2,3))^2)/(4*K1(1,3)*K1(2,3));
-%     a=4*norm(im_size)^2/((im_size(1)*im_size(2))^2);
-%     inliers21=AC_RANSAC({Corresp(1:2,:),Corresp(3:4,:)},@fundamental_model_ransac,N,8,1,a,1,1,40);
-%     inliers31=AC_RANSAC({Corresp(1:2,:),Corresp(5:6,:)},@fundamental_model_ransac,N,8,1,a,1,1,40);
-%     inliers32=AC_RANSAC({Corresp(3:4,:),Corresp(5:6,:)},@fundamental_model_ransac,N,8,1,a,1,1,40);
-%     inliers=intersect(intersect(inliers21,inliers31),inliers32);
-%     fprintf('Ransac found %d inliers out of %d.\n',size(inliers,2),N);
-    inliers=1:N; % test without ransac
 
-    % samples for initial estimation and bundle adjustment
-    Corresp_inliers=Corresp(:,inliers);
+    % Samples for initial estimation and bundle adjustment
     rng(it);
-    init_sample=randsample(inliers,min(initial_sample_size,length(inliers)));
+    init_sample=randsample(1:N,min(initial_sample_size,N));
     rng(it);
-    ref_sample=randsample(init_sample,min(bundle_adj_size,size(init_sample,2)));
+    ref_sample=randsample(init_sample,min(bundle_adj_size,length(init_sample)));
     Corresp_init=Corresp(:,init_sample);
     Corresp_ref=Corresp(:,ref_sample);
     
+    % estimate the pose using all methods
     fprintf('method... ');
     for m=methods_to_test
         fprintf('%d ',m);
-        if (m>6 && N<8) || N<7 % if not enough matches
+        
+        % if there are not enough matches for initial estimation, inf error
+        if (m>6 && N<8) || N<7 
             repr_err(it,m,:)=inf;    rot_err(it,m,:)=inf;
             t_err(it,m,:)=inf;       iter(it,m,:)=inf;
             time(it,m,:)=inf;
@@ -116,7 +107,7 @@ for it=1:length(triplets_to_evaluate)
         
         % % Pose estimation by method m, measuring time            
         t0=cputime;
-        [R_t_2,R_t_3,~,~,nit]=method{m}(Corresp_init,CalM);
+        [R_t_2,R_t_3,~,~,nit]=methods{m}(Corresp_init,CalM);
         t=cputime-t0;
         
         % reprojection error with all inliers
@@ -131,8 +122,8 @@ for it=1:length(triplets_to_evaluate)
         iter(it,m,1)=nit; time(it,m,1)=t;
         
         
-        fprintf('(ref)... ');
         % % Apply Bundle Adjustment
+        fprintf('(ref)... ');
         t0=cputime;
         [R_t_ref,~,nit,repr_errBA]=BundleAdjustment(CalM,...
             [eye(3,4);R_t_2;R_t_3],Corresp_ref);
@@ -158,7 +149,7 @@ end
 %%
 
 save Results/errors_1_to_70_triplets_fountain_100i_50r_1_reprinliers.mat repr_err rot_err t_err iter time...
-   methods_to_test method dataset triplets_to_evaluate initial_sample_size...
+   methods_to_test methods dataset triplets_to_test initial_sample_size...
    bundle_adj_size repr_err_th
 
 % save Results/errors_1_to_50_triplets_herzjesu_100i_50r_1_reprinliers.mat repr_err rot_err t_err iter time...
@@ -175,58 +166,7 @@ for m=methods_to_test
         mean(t_err(:,m,2)), mean(iter(:,m,2)), mean(time(:,m,2))];
 end
 
-%% Means only for some triplets
 
-ind_triplets=find(angles<=174);
-means_some=zeros(8,5,2);
-for m=methods_to_test
-    means_some(m,:,1)=[mean(repr_err(ind_triplets,m,1)), mean(rot_err(ind_triplets,m,1)),...
-        mean(t_err(ind_triplets,m,1)), mean(iter(ind_triplets,m,1)), mean(time(ind_triplets,m,1))];
-    means_some(m,:,2)=[mean(repr_err(ind_triplets,m,2)), mean(rot_err(ind_triplets,m,2)),...
-        mean(t_err(ind_triplets,m,2)), mean(iter(ind_triplets,m,2)), mean(time(ind_triplets,m,2))];
-end
-
-ind1=find(repr_err(:,3,1)<repr_err(:,1,1));
-ind2=find(repr_err(:,3,1)>=repr_err(:,1,1));
-mean(angles(ind1))
-mean(angles(ind2))
-
-length(ind1)
-length(ind2)
-mean(repr_err(ind1,3,1)-repr_err(ind1,1,1));
-mean(repr_err(ind2,3,1)-repr_err(ind2,1,1));
-
-
-%% Means only for valid triplets
-
-rot_err_thresh=5;
-trans_err_thresh=10;
-
-
-indexes_valid=zeros(8,length(triplets_to_evaluate));
-num_valid_cases=zeros(8,1);
-for m=methods_to_test
-    aux=[rot_err(:,m,2)>rot_err_thresh, t_err(:,m,2)>trans_err_thresh];
-    indexes_valid(m,:)=(sum(aux,2)==0);
-    num_valid_cases(m)=100*sum(indexes_valid(m,:))/length(triplets_to_evaluate);
-end
-
-% common valid triplets
-indexes_valid_all=sum(~indexes_valid(methods_to_test,:),1)==0;
-
-means_valid=zeros(8,5,2),;causes 
-for m=methods_to_test
-    means_valid(m,:,1)=[mean(repr_err(indexes_valid_all,m,1)),...
-        mean(rot_err(indexes_valid_all,m,1)),...
-        mean(t_err(indexes_valid_all,m,1)),...
-        mean(iter(indexes_valid_all,m,1)),...
-        mean(time(indexes_valid_all,m,1))];
-    means_valid(m,:,2)=[mean(repr_err(indexes_valid_all,m,2)),...
-        mean(rot_err(indexes_valid_all,m,2)),...
-        mean(t_err(indexes_valid_all,m,2)),...
-        mean(iter(indexes_valid_all,m,2)),...
-        mean(time(indexes_valid_all,m,2))];
-end
 
 %% latex table
 
@@ -239,7 +179,7 @@ input.data=[[means_all(mod,[1:3,5],1),means_all(mod,4,2)];...
 input.tableColLabels = {'repr. err. (px)', '\textsf{R} err.','\textsf{t} err.','init. time (s)','iter. BA'};
 input.tableRowLabels = {'\textsf{TFT-L}','\textsf{TFT-R}','\textsf{TFT-N}',...
     '\textsf{TFT-PF}','\textsf{TFT-PH}', '\textsf{F-L}', '\textsf{F-O}', '\textsf{BA}'};
-input.dataFormat = {'%.3f',3,'%.2f',2}; 
+input.dataFormat = {'%.3f',4,'%.2f',1}; 
 input.dataNanString = ' ';
 
 
@@ -266,10 +206,10 @@ figure;
 scatter3(cam_centers(1,:),cam_centers(2,:),cam_centers(3,:));
 
 %% compute angles
-angles=zeros(length(triplets_to_evaluate),1);
-for it=1:length(triplets_to_evaluate)
+angles=zeros(length(triplets_to_test),1);
+for it=1:length(triplets_to_test)
     
-    triplet=indexes_sorted(triplets_to_evaluate(it) ,1:3); 
+    triplet=indexes_sorted(triplets_to_test(it) ,1:3); 
     im1=triplet(1); im2=triplet(2);  im3=triplet(3);
     
     % Calibration info
