@@ -5,8 +5,8 @@ clear; close all;
 
 
 %% Here uncomment the dataset to use.
-dataset='fountain-P11';  
-% dataset='Herz-Jesu-P8';
+% dataset='fountain-P11';  
+dataset='Herz-Jesu-P8';
 
 
 %% Some parameters
@@ -15,14 +15,15 @@ path_to_data=strcat('Data/',dataset,'/');
 switch dataset
     case 'fountain-P11'
         triplets_to_evaluate=1:70;
+        repr_err_th=1;
     case 'Herz-Jesu-P8'
         triplets_to_evaluate=1:50;
+        repr_err_th=1;
 end
 
 initial_sample_size=100;
 bundle_adj_size=50;
 
-repr_err_th=20;
 
 %% Recover correspondances
 
@@ -156,13 +157,13 @@ end
 
 %%
 
-%save Results/errors_1_to_70_triplets_fountain_100i_50r_40_reprinliers.mat repr_err rot_err t_err iter time...
-%    methods_to_test method dataset triplets_to_evaluate initial_sample_size...
-%    bundle_adj_size repr_err_th
+save Results/errors_1_to_70_triplets_fountain_100i_50r_1_reprinliers.mat repr_err rot_err t_err iter time...
+   methods_to_test method dataset triplets_to_evaluate initial_sample_size...
+   bundle_adj_size repr_err_th
 
-save Results/errors_1_to_50_triplets_herzjesu_100i_50r_20_reprinliers.mat repr_err rot_err t_err iter time...
-    methods_to_test method dataset triplets_to_evaluate initial_sample_size...
-    bundle_adj_size repr_err_th
+% save Results/errors_1_to_50_triplets_herzjesu_100i_50r_1_reprinliers.mat repr_err rot_err t_err iter time...
+%     methods_to_test method dataset triplets_to_evaluate initial_sample_size...
+%     bundle_adj_size repr_err_th
 
 %% Means for all triplets
 
@@ -174,6 +175,26 @@ for m=methods_to_test
         mean(t_err(:,m,2)), mean(iter(:,m,2)), mean(time(:,m,2))];
 end
 
+%% Means only for some triplets
+
+ind_triplets=find(angles<=174);
+means_some=zeros(8,5,2);
+for m=methods_to_test
+    means_some(m,:,1)=[mean(repr_err(ind_triplets,m,1)), mean(rot_err(ind_triplets,m,1)),...
+        mean(t_err(ind_triplets,m,1)), mean(iter(ind_triplets,m,1)), mean(time(ind_triplets,m,1))];
+    means_some(m,:,2)=[mean(repr_err(ind_triplets,m,2)), mean(rot_err(ind_triplets,m,2)),...
+        mean(t_err(ind_triplets,m,2)), mean(iter(ind_triplets,m,2)), mean(time(ind_triplets,m,2))];
+end
+
+ind1=find(repr_err(:,3,1)<repr_err(:,1,1));
+ind2=find(repr_err(:,3,1)>=repr_err(:,1,1));
+mean(angles(ind1))
+mean(angles(ind2))
+
+length(ind1)
+length(ind2)
+mean(repr_err(ind1,3,1)-repr_err(ind1,1,1));
+mean(repr_err(ind2,3,1)-repr_err(ind2,1,1));
 
 
 %% Means only for valid triplets
@@ -193,7 +214,7 @@ end
 % common valid triplets
 indexes_valid_all=sum(~indexes_valid(methods_to_test,:),1)==0;
 
-means_valid=zeros(8,5,2);
+means_valid=zeros(8,5,2),;causes 
 for m=methods_to_test
     means_valid(m,:,1)=[mean(repr_err(indexes_valid_all,m,1)),...
         mean(rot_err(indexes_valid_all,m,1)),...
@@ -244,7 +265,7 @@ end
 figure;
 scatter3(cam_centers(1,:),cam_centers(2,:),cam_centers(3,:));
 
-% compute angles
+%% compute angles
 angles=zeros(length(triplets_to_evaluate),1);
 for it=1:length(triplets_to_evaluate)
     
@@ -271,6 +292,19 @@ end
 figure;
 N=histc(angles,90:5:180);
 bar(90:5:180,N,'histc')
+
+%%
+
+figure;
+scatter(angles,repr_err(:,1,1)-repr_err(:,3,1));
+figure;
+scatter(angles,repr_err(:,1,1)-repr_err(:,5,1));
+
+
+figure;
+scatter(angles,t_err(:,1,1)-t_err(:,3,1));
+figure;
+scatter(angles,t_err(:,1,1)-t_err(:,5,1));
 
 
 
