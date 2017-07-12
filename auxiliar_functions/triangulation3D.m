@@ -1,19 +1,32 @@
 function space_points=triangulation3D(Pcam,image_points)
-% Triangulation of N 3d points from their image points in M>1 images.
+%TRIANGULATION3D Triangulation of N 3d points from their image projections
+% in M>1 images. The triangulation is initially computed by the DLT algorithm.
 %
-% The triangulation is initially computed by the DLT algorithm and refined
-% by minimizing reprojection error using Gauss-Helmert method
-%
-% Input arguments:
-% Pcam         - M-cell of projection 3x4-matrices
-% image_points - 2MxN-matrix with the image points in each image OR
-%                3MxN-matrix with the image points in each image with
-%                homogeneous coord
-% Output arguments:
-% space_points - 4xN-array containing the 3d estimated positions (in
+%  Input arguments:
+%  Pcam         - M-cell of projection 3x4-matrices
+%  image_points - 2MxN-matrix with the image points in each image OR
+%                 3MxN-matrix with the image points in each image with
+%                 homogeneous coord
+%  Output arguments:
+%  space_points - 4xN-array containing the 3d estimated positions (in
 %                 homogeneous coordinates) of the image points.
 %
-% Copyright (c) 2017 Laura F. Julia
+
+% Copyright (c) 2017 Laura F. Julia <laura.fernandez-julia@enpc.fr>
+% All rights reserved.
+%
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 M=size(Pcam,2); % number of images
@@ -34,7 +47,6 @@ switch size(image_points,1)
         return
 end
 
-%func=@(x1,x2,x3)constraintsGH_triangulation(x1,x2,x3,Pcam);
 space_points=zeros(4,N);
 for n=1:N
     corresp_n=image_points(:,n);
@@ -49,19 +61,6 @@ for n=1:N
     [~,~,V]=svd(ls_matrix);
     PointX=V(:,4);
     space_points(:,n)=PointX;
-    
-%     % Refinement using GH
-%     corresp_n_repr=zeros(2*M,1);
-%     for i=1:M
-%         corresp_n_repr(2*(i-1)+1:2*(i-1)+2,:)=...
-%             (Pcam{i}(1:2,:)*PointX)/(Pcam{i}(3,:)*PointX);
-%     end
-%     y=zeros(0,1);
-%     X_est=PointX(1:3)./PointX(4);
-%     [~,X_opt,~]=Gauss_Helmert(func,corresp_n_repr,X_est,y,corresp_n,eye(2*M));
-%     if sum(isfinite(X_opt))==3
-%         space_points(:,n)=[X_opt;1];
-%     end
 end
 
 

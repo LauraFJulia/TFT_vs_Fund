@@ -1,23 +1,22 @@
-function [R_t_2,R_t_3,Reconst,T,iter]=PapaFaugTFTPoseEstimation(Corresp,CalM)
-% Pose estimation of 3 views from corresponding triplets of points using
-% the TriFocal Tensor with minimal constraints by T. Papadopoulo and O.
-% Faugeras.
+function [R_t_2,R_t_3,Reconst,T,iter]=FaugPapaTFTPoseEstimation(Corresp,CalM)
+%FAUGPAPATFTPOSEESTIMATION Pose estimation of 3 views from corresponding
+% triplets of points using the TriFocal Tensor with minimal constraints
+% by T. Papadopoulo and O. Faugeras.
 %
-% An initial trifocal tensor is computed linearly from the trilinearities
-% using the triplets of correspondences. Then a minimal parameterization is
-% computed using the constraints and minimisation model presented in "A non
-% linear method for estimatin the projective geometry of three views" by T.
-% Papadopoulo and O. Faugeras. After the optimization the essential 
-% matrices are computed from the tensor and the orientations are extracted
-% by SVD.
-%
-% Input arguments:
+%  An initial trifocal tensor is computed linearly from the trilinearities
+%  using the triplets of correspondences. Then a minimal parameterization is
+%  computed using the constraints presented in "A non linear method for
+%  estimatin the projective geometry of three views" by O. Faugeras and
+%  T. Papadopoulo. After the optimization the essential matrices are 
+%  computed from the tensor and the orientations are extracted by SVD.
+% 
+%  Input arguments:
 %  Corresp  - 6xN matrix containing in each column, the 3 projections of
 %             the same space point onto the 3 images.
 %  CalM     - 9x3 matrix containing the M calibration 3x3 matrices for 
 %             each camera concatenated.
 %
-% Output arguments: 
+%  Output arguments: 
 %  R_t_2    - 3x4 matrix containing the rotation matrix and translation 
 %             vector [R2,t2] for the second camera.
 %  R_t_3    - 3x4 matrix containing the rotation matrix and translation 
@@ -26,9 +25,25 @@ function [R_t_2,R_t_3,Reconst,T,iter]=PapaFaugTFTPoseEstimation(Corresp,CalM)
 %             correspondences.
 %  T        - 3x3x3 array containing the trifocal tensor associated to 
 %             this triplet of cameras.
-% iter      - number of iterations needed in GH algorithm to reach minimum 
+%  iter     - number of iterations needed in GH algorithm to reach minimum 
 %
-% Copyright (c) 2017 Laura F. Julia      
+
+% Copyright (c) 2017 Laura F. Julia <laura.fernandez-julia@enpc.fr>
+% All rights reserved.
+%
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 % Normalization of the data
 [x1,Normal1]=Normalize2Ddata(Corresp(1:2,:));
@@ -67,18 +82,17 @@ Reconst=Reconst(1:3,:)./repmat(Reconst(4,:),3,1);
 end
 
 
-
-
-
+%%% function with GH constraints and parameters for Faugeras-Papadopopoulo's
+%%% parameterization
 function [f,g,A,B,C,D]=constrGH(obs,x,~)
 
-T=reshape(x,3,3,3);
-obs=reshape(obs,6,[]);
+T=reshape(x,3,3,3);    % tensor
+obs=reshape(obs,6,[]); % observations
 N=size(obs,2);
 
-f=zeros(4*N,1);
-A=zeros(4*N,27);
-B=zeros(4*N,6*N);
+f=zeros(4*N,1);    % constraints for tensor and observations (trilinearities)
+A=zeros(4*N,27);   % jacobian of f w.r.t. the tensor T
+B=zeros(4*N,6*N);  % jacobian of f w.r.t. the observations
 for i=1:N
     % points in the three images for correspondance i
     x1=obs(1:2,i); x2=obs(3:4,i); x3=obs(5:6,i);
@@ -97,8 +111,8 @@ for i=1:N
     B(ind2+1:ind2+4,6*(i-1)+(5:6))=kron([0,1;1,0],S2.'*reshape(T(:,3,:),3,3)*[x1;1]);
 end
 
-g=zeros(12,1);
-C=zeros(12,27);
+g=zeros(12,1);     % constraints on the parameters of T
+C=zeros(12,27);    % jacobian of g w.r.t. the parameters of T
 D=zeros(12,0);
 for i=1:3
     g(i,:)=det(T(:,:,i));
@@ -138,7 +152,7 @@ end
 
 end
 
-
+%%% Computes a minor of a matrix A given the row and column indexes
 function m=minor(A,i,j)
 [h,w]=size(A);
 m=det(A([1:i-1,i+1:h],[1:j-1,j+1:w])) * (-1)^(i+j);

@@ -1,20 +1,20 @@
 function [R_t_2,R_t_3,Reconst,T,iter]=OptimFPoseEstimation(Corresp,CalM)
-% Pose estimation of 3 views from corresponding triplets of points using
-% an optimized fundamental matrix. 
+%OPTIMFPOSEESTIMATION Pose estimation of 3 views from corresponding
+% triplets of points using optimized estimation of fundamental matrices. 
 % 
-% The fundamental matrices are initialized by the linear solution and
-% refined by a Gauss-Helmert minimization of the Gold standard error for
-% two of the three possible pairs of views. The essential matrices are 
-% computed using the calibration matrices. The orientations are extracted
-% by SVD.
+%  The fundamental matrices are initialized by the linear solution and
+%  refined by a Gauss-Helmert minimization of the Gold standard error for
+%  two of the three possible pairs of views. The essential matrices are 
+%  computed using the calibration matrices. The orientations are extracted
+%  by SVD.
 %
-% Input arguments:
+%  Input arguments:
 %  Corresp  - 6xN matrix containing in each column, the 3 projections of
 %             the same space point onto the 3 images.
 %  CalM     - 9x3 matrix containing the M calibration 3x3 matrices for 
 %             each camera concatenated.
 %
-% Output arguments: 
+%  Output arguments: 
 %  R_t_2    - 3x4 matrix containing the rotation matrix and translation 
 %             vector [R2,t2] for the second camera.
 %  R_t_3    - 3x4 matrix containing the rotation matrix and translation 
@@ -23,7 +23,23 @@ function [R_t_2,R_t_3,Reconst,T,iter]=OptimFPoseEstimation(Corresp,CalM)
 %             correspondences.
 %  iter     - number of iterations needed in GH algorithm to reach minimum
 %
-% Copyright (c) 2017 Laura F. Julia
+
+% Copyright (c) 2017 Laura F. Julia <laura.fernandez-julia@enpc.fr>
+% All rights reserved.
+%
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 N=size(Corresp,2);
 K1=CalM(1:3,:); K2=CalM(4:6,:); K3=CalM(7:9,:);

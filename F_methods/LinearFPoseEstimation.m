@@ -1,19 +1,19 @@
 function [R_t_2,R_t_3,Reconst,T,iter]=LinearFPoseEstimation(Corresp,CalM)
-% Pose estimation of 3 views from corresponding triplets of points using
-% the linear fundamental matrix. 
+%LINEARFPOSEESTIMATION Pose estimation of 3 views from corresponding
+% triplets of points using the linear estimation of fundamental matrices. 
 % 
-% The fundamental matrices are computed with an algebraic minimization of
-% the epipolar equations for two of the three possible pairs of views. The
-% essential matrices are computed with the calibration  matrices. The 
-% orientations are extracted by SVD.
+%  The fundamental matrices are computed with an algebraic minimization of
+%  the epipolar equations for two of the three possible pairs of views. The
+%  essential matrices are computed with the calibration  matrices. The 
+%  orientations are extracted by SVD.
 % 
-% Input arguments:
+%  Input arguments:
 %  Corresp  - 6xN matrix containing in each column, the 3 projections of
 %             the same space point onto the 3 images.
 %  CalM     - 9x3 matrix containing the M calibration 3x3 matrices for 
 %             each camera concatenated.
 %
-% Output arguments: 
+%  Output arguments: 
 %  R_t_2    - 3x4 matrix containing the rotation matrix and translation 
 %             vector [R2,t2] for the second camera.
 %  R_t_3    - 3x4 matrix containing the rotation matrix and translation 
@@ -21,7 +21,23 @@ function [R_t_2,R_t_3,Reconst,T,iter]=LinearFPoseEstimation(Corresp,CalM)
 %  Reconst  - 3xN matrix containing the 3D reconstruction of the
 %             correspondences.
 %
-% Copyright (c) 2017 Laura F. Julia
+
+% Copyright (c) 2017 Laura F. Julia <laura.fernandez-julia@enpc.fr>
+% All rights reserved.
+%
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 N=size(Corresp,2);
 K1=CalM(1:3,:); K2=CalM(4:6,:); K3=CalM(7:9,:);
@@ -64,7 +80,7 @@ T=TFT_from_P(K1*eye(3,4),K2*R_t_2,K3*R_t_3);
 end
 
 
-
+%%% Extracts rotation and translation from fundamental matrix
 function [R_f,t_f]=recover_R_t(K1,K2,F21,x1,x2)
 
 E21=K2.'*F21*K1;

@@ -1,23 +1,23 @@
 function [R_t_2,R_t_3,Reconst,T,iter]=PiColPoseEstimation(Corresp,CalM)
-% Pose estimation of 3 views from corresponding triplets of points using
-% the Pi matrices from Ponce & Hebert parameterizing three views in the
-% special case of collinear camera centers.
+%PICOLPOSEESTIMATION Pose estimation of 3 views from corresponding triplets
+% of points using the Pi matrices from Ponce&Hebert parameterizing three
+% views in the special case of collinear camera centers.
 %
-% An initial trifocal tensor is computed linearly from the trilinearities
-% using the triplets of correspondences. From it, initial Pi matrices are
-% computed. Then the error is minimized using the Gauss-Helmert model to
-% impose the minimal constraints of the Pose & Hebert Pi matrices 
-% parameterization. After the optimization, a final TFT is computed and the
-% essential matrices are extracted. Finally, the orientations are retrieved
-% by SVD.
+%  An initial trifocal tensor is computed linearly from the trilinearities
+%  using the triplets of correspondences. From it, initial Pi matrices are
+%  computed. Then the error is minimized using the Gauss-Helmert model to
+%  impose the minimal constraints of the Pose & Hebert Pi matrices 
+%  parameterization. After the optimization, a final TFT is computed and the
+%  essential matrices are extracted. Finally, the orientations are retrieved
+%  by SVD.
 %
-% Input arguments:
+%  Input arguments:
 %  Corresp  - 6xN matrix containing in each column, the 3 projections of
 %             the same space point onto the 3 images.
 %  CalM     - 9x3 matrix containing the M calibration 3x3 matrices for 
 %             each camera concatenated.
 %
-% Output arguments: 
+%  Output arguments: 
 %  R_t_2    - 3x4 matrix containing the rotation matrix and translation 
 %             vector [R2,t2] for the second camera.
 %  R_t_3    - 3x4 matrix containing the rotation matrix and translation 
@@ -26,9 +26,25 @@ function [R_t_2,R_t_3,Reconst,T,iter]=PiColPoseEstimation(Corresp,CalM)
 %             correspondences.
 %  T        - 3x3x3 array containing the trifocal tensor associated to 
 %             this triplet of cameras.
-% iter      - number of iterations needed in GH algorithm to reach minimum
+%  iter     - number of iterations needed in GH algorithm to reach minimum
 %
-% Copyright (c) 2017 Laura F. Julia
+
+% Copyright (c) 2017 Laura F. Julia <laura.fernandez-julia@enpc.fr>
+% All rights reserved.
+%
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 % Number of correspondences
 N=size(Corresp,2);
@@ -41,27 +57,27 @@ N=size(Corresp,2);
 % First approximation of T: linear equations
 [~,P1,P2,P3]=linearTFT(x1,x2,x3);
 
-%%% Epipolar-Trinocular error with Gauss-Helmert
 % find homography H sending camera centers to fundamental points
 M=[null(P1), null(P2)];
 coeff=M\null(P3);
 M=[coeff(1)*M(:,1),coeff(2)*M(:,2), null(M.')];
-% transform camera matrices by M
 P1=P1*M; P2=P2*M; P3=P3*M;
 
-% find Pi matrices (vectors)
+% find Pi matrices
 Pi1=inv(P1(:,2:4)); Pi2=inv(P2(:,[1 3 4])); Pi3=inv(P3(:,[2 3 4]));
 Pi1=[0 0 0; Pi1];  
 Pi2=[Pi2(1,:); 0 0 0;Pi2(2:3,:)];
 Pi3=[0 0 0; Pi3];
+
 % minimal parameterization
 Pi1=Pi1./(norm(Pi1(4,:))); Pi2=Pi2./(norm(Pi2(4,:))); Pi3=Pi3./(norm(Pi3(4,:)));
 Q1=eye(4);
 u1=Pi1(3,:).';  v1=Pi1(4,:).';
 u2=Pi2(3,:).';  v2=Pi2(4,:).';
-tol=1e-10;
+
 % Make pi31 perpendicular to pi41 and 
 % pi32 perpendicular to pi42
+tol=1e-10;
 A=(v1.'*v1)*(u2.'*v2)-(u1.'*v1)*(v2.'*v2);
 B=(v1.'*v1)*(u2.'*u2)-(u1.'*u1)*(v2.'*v2);
 C=(u1.'*v1)*(u2.'*u2)-(u1.'*u1)*(u2.'*v2);
@@ -93,7 +109,7 @@ p1_est=P1*points3D; p1_est=p1_est(1:2,:)./repmat(p1_est(3,:),2,1);
 p2_est=P2*points3D; p2_est=p2_est(1:2,:)./repmat(p2_est(3,:),2,1);
 p3_est=P3*points3D; p3_est=p3_est(1:2,:)./repmat(p3_est(3,:),2,1);
 
-% minimize reproj error using Gauss-Helmert
+% minimize error using Gauss-Helmert
 pi=[reshape(Pi1(2:4,:).',9,1);reshape(Pi2([1 3 4],:).',9,1);reshape(Pi3(2:4,:).',9,1)];
 x=reshape([x1(1:2,:);x2(1:2,:);x3(1:2,:)],6*N,1);
 x_est=reshape([p1_est;p2_est;p3_est],6*N,1);
@@ -123,6 +139,8 @@ Reconst=Reconst(1:3,:)./repmat(Reconst(4,:),3,1);
 end
 
 
+%%% function with GH constraints and parameters for Ponce&Hebert
+%%% parameterization for collinear cameras
 function [f,g,A,B,C,D]=constraintsGH_PiCM(x,pi,~)
 % constraints for GH of PiM method
 
@@ -154,9 +172,7 @@ C(8,4:9)=[pi41.',pi31.'];       C(11,13:18)=[pi42.',pi32.'];
 f=zeros(5*N,1);
 A=zeros(5*N,27);
 B=zeros(5*N,6*N);
-
 for i=1:N
-    
     % points in the three images for correspondance i
     ind=6*(i-1);
     x1=x(ind+1:ind+2);  p1=[x1;1];
@@ -197,7 +213,6 @@ for i=1:N
         ((pi41.'*p1)*(pi42.')*(w3.'*p3) + ((pi41.'*p1)*(pi12.')-(pi21.'*p1)*(pi42.'))*(pi43.'*p3))*eye(3,2),...
         ((pi41.'*p1)*(pi42.'*p2)*(w3.') + ((pi41.'*p1)*(pi12.'*p2)-(pi21.'*p1)*(pi42.'*p2))*(pi43.'))*eye(3,2)];
 end
-
 D=zeros(11,0);
 
 end

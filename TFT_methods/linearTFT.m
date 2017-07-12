@@ -1,21 +1,37 @@
 function [T,P1,P2,P3]=linearTFT(p1,p2,p3)
-% Linear estimation of the TFT
+%LINEARTFT Linear estimation of the TFT
 %
-% Estimation of the trifocal tensor from triplets of corresponding image
-% points by algebraic minimization of the linear contraints given by the
-% incidence relationships. The three projection matrices are also computed
-% using the TFT.
+%  Estimation of the trifocal tensor from triplets of corresponding image
+%  points by algebraic minimization of the linear contraints given by the
+%  incidence relationships. The three projection matrices are also computed
+%  using the TFT.
 %
-% Input arguments:
-% p1, p2, p3  - 3 vectors 3xN or 2xN containing image points for image 1 2
-%               and 3 respectively in homogeneous or cartesian coordinates
+%  Input arguments:
+%  p1, p2, p3  - 3 vectors 3xN or 2xN containing image points for image 1 2
+%                and 3 respectively in homogeneous or cartesian coordinates
 %
-% Output arguments:
-%     T       - 3x3x3 array containing the trifocal tensor associated to 
-%               the triplets of corresponding points
-% P1, P2, P3  - three estimated projection matrices 3x4
+%  Output arguments:
+%  T           - 3x3x3 array containing the trifocal tensor associated to 
+%                the triplets of corresponding points
+%  P1, P2, P3  - three estimated projection matrices 3x4
 %
-% Copyright (c) 2017 Laura F. Julia
+
+% Copyright (c) 2017 Laura F. Julia <laura.fernandez-julia@enpc.fr>
+% All rights reserved.
+%
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 N=size(p1,2);
 A=zeros(4*N,27); % matrix of the linear system on the parameters of the TFT

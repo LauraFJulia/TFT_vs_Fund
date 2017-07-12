@@ -1,19 +1,35 @@
 function [F,iter]=optimF(p1,p2)
-% Optimal estimation of the Fundamental matrix
+%OPTIMF Optimal estimation of the Fundamental matrix.
 %
-% Computation of the fundamental matrix from corresponding points in two
-% images using Gauss-Helmert optimization, initilized by the linear 
-% solution.
+%  Computation of the fundamental matrix from corresponding points in two
+%  images using Gauss-Helmert optimization, initilized by the linear 
+%  solution.
 %
-% Input arguments:
-% p1, p2  - 3xN or 2xN arrays of image points in image 1 and 2
+%  Input arguments:
+%  p1, p2  - 3xN or 2xN arrays of image points in image 1 and 2
 %           respectively, in homogeneous or cartesian coordinates.
 %
-% Output arguments:
-% F       - 3x3 array, the fundamental matrix
-% iter    - number of iterations needed in GH algorithm to reach minimum
+%  Output arguments:
+%  F       - 3x3 array, the fundamental matrix
+%  iter    - number of iterations needed in GH algorithm to reach minimum
 %
-% Copyright (c) 2017 Laura F. Julia
+
+% Copyright (c) 2017 Laura F. Julia <laura.fernandez-julia@enpc.fr>
+% All rights reserved.
+%
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 N=size(p1,2);
 % Minimum number of correspondences is 8
@@ -61,6 +77,9 @@ F=U*D*V.';
 
 end
 
+
+%%% constraints and parameters for the optimisation of the fundamental
+%%% matrix with Gauss-Helmert
 function [f,g,A,B,C,D]=constraintsGH_F(x,p,~)
 % Gauss-Helmert constraints for fundamental matrix optimization
 N=size(x,1)/4;

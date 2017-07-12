@@ -1,8 +1,10 @@
 function [CalM,R_t,Corresp,points3D]=generateSyntheticScene(N,noise,seed,focalL,angle)
-% Generates a synthetic scene composed of three cameras, N 3D points and
-% their projections onto the three images.
+%GENERATESYNTHETICSCENE synthetic data generation
 %
-% Input arguments:
+%  Generates a synthetic scene composed of three cameras, N 3D points and
+%  their projections onto the three images.
+%
+%  Input arguments:
 %  N        - number of random 3D points to generate
 %  noise    - sigma in pixels for the gaussian noise in image points
 %  seed     - seed for random generation of 3D points and noise
@@ -11,7 +13,7 @@ function [CalM,R_t,Corresp,points3D]=generateSyntheticScene(N,noise,seed,focalL,
 %  angle    - angle between the three centers in degrees. Should be in the
 %             interval [70,180], otherwise default scene is chosen
 %
-% Output arguments: 
+%  Output arguments: 
 %  CalM     - 9x3 matrix containing the M calibration 3x3 matrices for 
 %             each camera concatenated.
 %  R_t      - 3-cell containing two 3x4 orientation matrices [R2,t2]
@@ -19,10 +21,26 @@ function [CalM,R_t,Corresp,points3D]=generateSyntheticScene(N,noise,seed,focalL,
 %  Corresp  - 6xN matrix containing in each column, the 3 projections of
 %             the same space point onto the 3 images.
 %  points3D - 3xN matrix containing the 3D points.
+%
+%%% measurements are in mm
+%%% sensor size 36x24mm --> image size 1800x1200 pixels 
+%%% (resolution 1mm=50pix)
 
-%%% measurements in mm
-% sensor size 36x24mm --> image size 1800x1200 pixels 
-% (resolution 1mm=50pix)
+% Copyright (c) 2017 Laura F. Julia <laura.fernandez-julia@enpc.fr>
+% All rights reserved.
+%
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 if isempty(angle) || angle<70 || angle>180
     p_coll=0; % default setting

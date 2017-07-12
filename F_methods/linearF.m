@@ -1,17 +1,33 @@
 function F=linearF(p1,p2)
-% Linear estimation of the Fundamental matrix
+%LINEARF Linear estimation of the Fundamental matrix
 %
-% Computation of the fundamental matrix from corresponding points in two
-% images using linear equations given by epipolar constraints
+%  Computation of the fundamental matrix from corresponding points in two
+%  images using linear equations given by epipolar constraints
 %
-% Input arguments:
-% p1, p2  - 3xN or 2xN arrays of image points in image 1 and 2
+%  Input arguments:
+%  p1, p2  - 3xN or 2xN arrays of image points in image 1 and 2
 %           respectively, in homogeneous or cartesian coordinates.
 %
-% Output arguments:
-%   F     - 3x3 array, the fundamental matrix
+%  Output arguments:
+%   F      - 3x3 array, the fundamental matrix
+% 
+
+% Copyright (c) 2017 Laura F. Julia <laura.fernandez-julia@enpc.fr>
+% All rights reserved.
 %
-% Copyright (c) 2017 Laura F. Julia
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 N=size(p1,2);
 

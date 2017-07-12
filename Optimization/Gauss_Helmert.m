@@ -1,18 +1,39 @@
-function [x_opt,t_opt,y_opt,iterations]=Gauss_Helmert(func,x0,t0,y0,x,P)
-% Gauss - Helmert model (general case of least squares adjustment)
-% implementation
-% 
-% func      matlab function containing the condition equations f, with
-%           jacobians A and B, and constraints g, with jacobians C and D
-%           [f,g,A,B,C,D]=func(x,t,y,auxiliar_P)
-% x0        initial point for the estimation of true image correspondances
-%           fitting t0
-% t0        initial estimation for parameters
-% y0        initial estimation for additional unknown parameters
-% x         observations
-% P         weight matrix for observations
+function [x_opt,t_opt,y_opt,iter]=Gauss_Helmert(func,x0,t0,y0,x,P)
+%GAUSS_HELMERT Gauss - Helmert model (general case of least squares adjustment)
 %
-% Copyright (c) 2017 Laura F. Julia
+%  Input parameters:
+%  func    - matlab function containing the condition equations f, with
+%            jacobians A and B, and constraints g, with jacobians C and D
+%            [f,g,A,B,C,D]=func(x,t,y,auxiliar_P)
+%  x0      - initial point for the estimation of true image correspondances
+%            fitting t0
+%  t0      - initial estimation for parameters
+%  y0      - initial estimation for additional unknown parameters
+%  x       - observations
+%  P       - weight matrix for observations
+%
+%  Output arguments:
+%  x_opt   - optimum for the image correspondences
+%  t_opt   - optimum parameters
+%  y_opt   - optimum additional unknown parameters
+%  iter    - total iterations needed to reach minimum
+
+% Copyright (c) 2017 Laura F. Julia <laura.fernandez-julia@enpc.fr>
+% All rights reserved.
+%
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 it_max=400;
 tol=1e-6;
@@ -58,7 +79,7 @@ for it=1:it_max
     end
     xi=x+v; ti=ti+dt; yi=yi+dy;
 end
-iterations=it;
+iter=it;
 x_opt=xi; y_opt=yi; t_opt=ti;
 
 end

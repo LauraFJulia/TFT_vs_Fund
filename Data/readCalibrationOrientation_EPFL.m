@@ -1,4 +1,6 @@
-function [K,R,t,im_size]=readCalibrationOrientation_Strecha(image_path,image_name)
+function [K,R,t,im_size]=readCalibrationOrientation_EPFL(image_path,image_name)
+%READCALIBRATIONORIENTATION_EPFL Gets the true calibration and orientation
+% of a camera in an EPFL dataset.
 
 filename=strcat(image_path,image_name,'.camera');
 calibration_file = fopen(filename,'r');

@@ -1,13 +1,29 @@
 % Script to recreate experiments on synthetic data for the PSIVT paper 
 %  submission "A Critical Review of the Trifocal Tensor Estimation"
 
+% Copyright (c) 2017 Laura F. Julia <laura.fernandez-julia@enpc.fr>
+% All rights reserved.
+%
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 clear; close all;
 
 %% Here uncomment the variable to vary to reproduce different experiments
-% option='noise';  % for varying noise
+option='noise';  % for varying noise
 % option='focal';  % for varying focal length
 % option='points'; % for varying number of initial points
-option='angle';  % for making camera centers collinear
+% option='angle';  % for making camera centers collinear
 
 
 %% Initial parameters
@@ -36,7 +52,7 @@ methods={...
     @LinearTFTPoseEstimation,...    % 1 - TFT - Linear estimation
     @ResslTFTPoseEstimation,...     % 2 - TFT - Ressl
     @NordbergTFTPoseEstimation,...  % 3 - TFT - Nordberg
-    @PapaFaugTFTPoseEstimation,...  % 4 - TFT - Papadopoulo&Faugeras 
+    @FaugPapaTFTPoseEstimation,...  % 4 - TFT - Faugeras&Papadopoulo
     @PiPoseEstimation,...           % 5 - Pi matrices - Ponce&Hebert
     @PiColPoseEstimation,...        % 6 - Pi matrices - Ponce&Hebert for collinear cameras
     @LinearFPoseEstimation,...      % 7 - Fundamental matrices - Linear estimation
@@ -133,11 +149,10 @@ end
 
 methods_to_plot=methods_to_test;
 
-method_names={'Linear TFT','Ressl TFT','Nordberg','PapadFaug','Ponce&Hebert',...
+method_names={'Linear TFT','Ressl TFT','Nordberg','FaugPapad','Ponce&Hebert',...
     'Ponce&Hebert-Col', 'Linear F', 'Optim F', 'Bundle Adj.'};
 
-figure('Position',[100,600,1800,300])
-
+figure('Position',[100,600,1800,300], 'Name', 'Results in initial estimation')
 % reprojection error plot
 subplot(1,5,1);
 plot(interval,repr_err(:,methods_to_plot,1))
@@ -168,8 +183,8 @@ plot(interval,time(:,methods_to_plot,1))
 title('Time for initial methods')
 legend(method_names(methods_to_plot),'Location','Best')
 
-% plots for Bundle Adjustment
-figure('Position',[100,100,1800,300])
+%%% plots for Bundle Adjustment
+figure('Position',[100,100,1800,300], 'Name', 'Results after Bundle Adjustment')
 % reprojection error plot
 subplot(1,5,1);
 plot(interval,repr_err(:,methods_to_plot,2))
@@ -199,21 +214,4 @@ subplot(1,5,5);
 plot(interval,time(:,methods_to_plot,2))
 title('Time for Bundle adjustment')
 legend(method_names(methods_to_plot),'Location','Best')
-
-
-%%
-switch option
-    case 'noise'
-        mat_file='varying_noise_M_12.mat';
-    case 'points'
-        mat_file='varying_M_noise_1.mat';
-    case 'focal'
-        mat_file='varying_f_M_12.mat';
-    case 'angle'
-        mat_file='varying_angle_M_13.mat';
-end
-
-save(mat_file,...
-    'interval', 'N', 'noise', 'f', 'angle', 'n_sim', 'methods_to_test',...
-    'option', 'repr_err', 'rot_err', 't_err', 'time', 'iter');
 

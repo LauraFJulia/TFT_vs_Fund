@@ -1,15 +1,16 @@
 function [R_t,Reconst,iter,repr_err]=BundleAdjustment(CalM,R_t_0,Corresp,Reconst0)
-% Bundle Adjustment for the pose estimation of M cameras and N 3D points.
-% The reprojection error of the N points to the M cameras is minimized over
-% the possible positions of the space points and orientations of the
-% cameras. The points do not need to be seen in all cameras but at least in
-% two. An initial guess for the orientations of the cameras is needed while
-% an initial triangulation of the space points is optional. The
-% oprimization is carried out by the Levenberg-Marquardt algorithm. The
-% rotations are parametrized by three angles each.
+%BUNDLE ADJUSTMENT Bundle adjustment optimization.
 %
+%  Bundle Adjustment for the pose estimation of M cameras and N 3D points.
+%  The reprojection error of the N points to the M cameras is minimized over
+%  the possible positions of the space points and orientations of the
+%  cameras. The points do not need to be seen in all cameras but at least in
+%  two. An initial guess for the orientations of the cameras is needed while
+%  an initial triangulation of the space points is optional. The
+%  oprimization is carried out by the Levenberg-Marquardt algorithm. The
+%  rotations are parametrized by three angles each.
 %
-% Input arguments:
+%  Input arguments:
 %  CalM     - 3Mx3 matrix containing the M calibration 3x3 matrices for 
 %             each camera concatenated.
 %  R_t_0    - 3Mx4 matrix of M 3x4 matrices concatenated containing a first
@@ -20,15 +21,29 @@ function [R_t,Reconst,iter,repr_err]=BundleAdjustment(CalM,R_t_0,Corresp,Reconst
 %  Reconst0 - 3xN matrix containing an initial estimation of the N 3D
 %             points. If not provided, they will be estimated.
 %
-% Output arguments:
+%  Output arguments:
 %  R_t      - 3Mx4 matrix of M 3x4 matrices concatenated with the final 
 %             rotation and translation of each camera, [R t].
 %  Reconst  - 3xN matrix containing the final estimation of the N 3D points.
 %  iter     - number of iterations needed in L-M algorithm to reach
 %             the minimum.
 %
-% Copyright (c) 2017 Laura F. Julia
-                
+
+% Copyright (c) 2017 Laura F. Julia <laura.fernandez-julia@enpc.fr>
+% All rights reserved.
+%
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.                
 
 
 M=size(Corresp,1)/2;    % Number of total images
@@ -109,8 +124,7 @@ end
 
 
 
-%%% function for the Least Squares minimisation with Levenberg-Marquardt %%
-
+%%% function for the Least Squares minimisation with Levenberg-Marquardt
 function [f,J]=bundleadjustment_LM(variables,Corresp,CalM)
 % the first camera matrix is supposed to be K1 * [ Id 0 ]
 
@@ -165,7 +179,7 @@ for i=1:N
         ind=2*M*(i-1)+2*(j-1);
         % f: distance from p to projection P_j*P
         [aux,dgamma]=Gamma(P*[Point;1]);
-        [aux,dxdist,dydist]=Dist(point,aux);
+        [aux,~,dydist]=Dist(point,aux);
         f(ind+1:ind+2)=aux;
 
         % Jacobians for f
