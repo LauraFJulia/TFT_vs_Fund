@@ -7,8 +7,6 @@ Version 0.1, July 2017
 Future releases and updates:
 https://github.com/LauraFJulia/TFT_vs_Fund.git
 
-This MATLAB(R) directory contains the code implemented for the PSIVT 2017 submission "A Critical Review of the Trifocal Tensor Estimation" by Laura F. Julia and Pascal Monasse.
-
 
 Files and folders
 -----------------
