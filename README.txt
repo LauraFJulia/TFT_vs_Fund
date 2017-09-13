@@ -1,5 +1,7 @@
 Pose estimation of 3 views based on the trifocal tensor and the fundamental matrix.
 
+This MATLAB(R) directory contains the code implemented for the PSIVT 2017 paper "A Critical Review of the Trifocal Tensor Estimation" by Laura F. Julia and Pascal Monasse.
+
 Laura F. Julia, <laura.fernandez-julia@enpc.fr>, Univ. Paris Est, LIGM, ENPC, France
 
 Version 0.1, July 2017
