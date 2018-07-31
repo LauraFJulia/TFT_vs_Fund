@@ -62,6 +62,7 @@ methods={...
 
 methods_to_test=[1:5,7:8]; % no method for collinear cameras
 
+
 %% error vectors
 repr_err = zeros(length(triplets_to_test),length(methods),2);
 rot_err  = zeros(length(triplets_to_test),length(methods),2);
@@ -104,8 +105,8 @@ for it=1:length(triplets_to_test)
     init_sample=randsample(1:N,min(initial_sample_size,N));
     rng(it);
     ref_sample=randsample(init_sample,min(bundle_adj_size,length(init_sample)));
-    Corresp_init=Corresp(:,init_sample);
-    Corresp_ref=Corresp(:,ref_sample);
+    Corresp_init=Corresp_inliers(:,init_sample);
+    Corresp_ref=Corresp_inliers(:,ref_sample);
     
     % estimate the pose using all methods
     fprintf('method... ');
